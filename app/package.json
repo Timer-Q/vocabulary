@@ -1,0 +1,51 @@
+{
+  "name": "@vocabulary/app",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Taro mini program for vocabulary learning",
+  "scripts": {
+    "dev:weapp": "taro build --type weapp --watch",
+    "dev:tt": "taro build --type tt --watch",
+    "build:weapp": "taro build --type weapp",
+    "build:tt": "taro build --type tt",
+    "build": "pnpm run build:weapp && pnpm run build:tt",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint \"src/**/*.{ts,tsx}\""
+  },
+  "dependencies": {
+    "@tarojs/components": "latest",
+    "@tarojs/helper": "latest",
+    "@tarojs/plugin-framework-react": "latest",
+    "@tarojs/plugin-platform-tt": "latest",
+    "@tarojs/plugin-platform-weapp": "latest",
+    "@tarojs/react": "latest",
+    "@tarojs/runtime": "latest",
+    "@tarojs/shared": "latest",
+    "@tarojs/taro": "latest",
+    "@tarojs/webpack5-runner": "^4.2.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "latest"
+  },
+  "devDependencies": {
+    "@babel/core": "latest",
+    "@babel/plugin-proposal-decorators": "^7.29.0",
+    "@babel/plugin-transform-class-properties": "^7.28.6",
+    "@babel/plugin-transform-runtime": "^7.29.0",
+    "@babel/preset-env": "^7.29.5",
+    "@babel/preset-react": "^7.28.5",
+    "@babel/preset-typescript": "^7.28.5",
+    "@babel/runtime": "^7.29.2",
+    "@tarojs/cli": "latest",
+    "@types/node": "latest",
+    "@types/react": "^18.3.12",
+    "@typescript-eslint/eslint-plugin": "latest",
+    "@typescript-eslint/parser": "latest",
+    "@unocss/preset-uno": "latest",
+    "@unocss/webpack": "latest",
+    "babel-plugin-dynamic-import-node": "^2.3.3",
+    "babel-preset-taro": "latest",
+    "eslint": "latest",
+    "typescript": "latest"
+  }
+}

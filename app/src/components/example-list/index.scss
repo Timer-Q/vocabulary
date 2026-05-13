@@ -1,0 +1,116 @@
+.example-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20rpx;
+}
+
+.example-list__toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.example-list__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.example-list__chip {
+  padding: 10rpx 20rpx;
+  border-radius: 999rpx;
+  background: var(--surface);
+  border: 1rpx solid var(--border);
+  color: var(--text-2);
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.example-list__chip.is-active {
+  border-color: transparent;
+  background: linear-gradient(135deg, rgba(27, 42, 78, 0.12), rgba(255, 107, 53, 0.15));
+  color: var(--brand-primary);
+}
+
+.example-list__toggle {
+  align-self: flex-start;
+  color: var(--brand-accent);
+  font-size: 24rpx;
+  font-weight: 700;
+}
+
+.example-card__hl {
+  color: var(--brand-accent);
+  font-weight: 700;
+}
+
+.example-card {
+  position: relative;
+  padding: 28rpx;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}
+
+.example-card::before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 8rpx;
+  height: 100%;
+  background: var(--info);
+  content: '';
+}
+
+.example-card.is-exam::before {
+  background: var(--warning);
+}
+
+.example-card.is-classic::before {
+  background: #a855f7;
+}
+
+.example-card.is-advanced::before {
+  background: var(--danger);
+}
+
+.example-card.is-root_transfer::before {
+  background: var(--success);
+}
+
+.example-card__meta {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.example-card__badge {
+  padding: 6rpx 12rpx;
+  border-radius: 999rpx;
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--info);
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.example-card__source {
+  color: var(--text-3);
+  font-size: 22rpx;
+}
+
+.example-card__sentence {
+  display: block;
+  margin-top: 20rpx;
+  color: var(--text-1);
+  font-size: 30rpx;
+  line-height: 1.55;
+}
+
+.example-card__translation {
+  display: block;
+  margin-top: 12rpx;
+  color: var(--text-2);
+  font-size: 26rpx;
+  line-height: 1.5;
+}

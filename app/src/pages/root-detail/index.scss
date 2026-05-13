@@ -1,0 +1,84 @@
+.root-detail__empty {
+  color: var(--text-3);
+  font-size: 28rpx;
+}
+
+.root-detail__form {
+  display: block;
+  color: var(--text-1);
+  font-size: 56rpx;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+.root-detail__meta {
+  margin-top: 12rpx;
+}
+
+.root-detail__pill {
+  display: inline-block;
+  padding: 8rpx 20rpx;
+  border-radius: 999rpx;
+  background: rgba(255, 107, 53, 0.12);
+  color: var(--brand-accent);
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.root-detail__mean {
+  display: block;
+  margin-top: 24rpx;
+  color: var(--text-1);
+  font-size: 34rpx;
+  font-weight: 800;
+}
+
+.root-detail__ext {
+  display: block;
+  margin-top: 16rpx;
+  color: var(--text-2);
+  font-size: 28rpx;
+  line-height: 1.55;
+}
+
+.root-detail__story {
+  display: block;
+  margin-top: 20rpx;
+  padding: 24rpx;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  color: var(--text-2);
+  font-size: 28rpx;
+  line-height: 1.6;
+  box-shadow: var(--shadow-md);
+}
+
+.root-detail__h {
+  display: block;
+  margin-top: 40rpx;
+  margin-bottom: 16rpx;
+  color: var(--text-1);
+  font-size: 30rpx;
+  font-weight: 800;
+}
+
+.root-detail__deriv {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+}
+
+.root-detail__chip {
+  padding: 14rpx 22rpx;
+  border-radius: 999rpx;
+  background: rgba(27, 42, 78, 0.08);
+  color: var(--brand-primary);
+  font-size: 26rpx;
+  font-weight: 700;
+}
+
+.root-detail__chip-gloss {
+  color: var(--text-3);
+  font-size: 24rpx;
+  font-weight: 500;
+}

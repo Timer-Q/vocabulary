@@ -1,0 +1,49 @@
+{
+  "name": "@vocabulary/server",
+  "private": true,
+  "version": "0.1.0",
+  "description": "NestJS backend for vocabulary mini program",
+  "scripts": {
+    "build": "nest build",
+    "start": "node dist/main.js",
+    "start:dev": "nest start --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint \"src/**/*.ts\"",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "prisma:studio": "prisma studio"
+  },
+  "dependencies": {
+    "@nestjs/bullmq": "latest",
+    "@nestjs/common": "latest",
+    "@nestjs/config": "latest",
+    "@nestjs/core": "latest",
+    "@nestjs/platform-express": "latest",
+    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/client": "latest",
+    "@supabase/supabase-js": "^2.105.3",
+    "bullmq": "latest",
+    "class-transformer": "latest",
+    "class-validator": "latest",
+    "dotenv": "^17.4.2",
+    "ioredis": "latest",
+    "pg": "^8.20.0",
+    "reflect-metadata": "latest",
+    "rxjs": "latest"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "latest",
+    "@nestjs/schematics": "latest",
+    "@nestjs/testing": "latest",
+    "@types/node": "latest",
+    "@typescript-eslint/eslint-plugin": "latest",
+    "@typescript-eslint/parser": "latest",
+    "eslint": "latest",
+    "prettier": "latest",
+    "prisma": "latest",
+    "ts-loader": "latest",
+    "ts-node": "latest",
+    "tsconfig-paths": "latest",
+    "typescript": "latest"
+  }
+}

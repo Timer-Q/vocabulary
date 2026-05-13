@@ -1,0 +1,27 @@
+.progress-ring {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.progress-ring__label {
+  color: var(--text-3);
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.progress-ring__segments {
+  display: flex;
+  gap: 8rpx;
+}
+
+.progress-ring__seg {
+  width: 28rpx;
+  height: 10rpx;
+  border-radius: 999rpx;
+  background: var(--border);
+}
+
+.progress-ring__seg.is-on {
+  background: linear-gradient(90deg, var(--brand-primary), var(--brand-accent));
+}

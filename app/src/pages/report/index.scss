@@ -1,0 +1,145 @@
+.report__title {
+  display: block;
+  color: var(--text-1);
+  font-size: 44rpx;
+  font-weight: 900;
+}
+
+.report__sub {
+  display: block;
+  margin-top: 8rpx;
+  margin-bottom: 32rpx;
+  color: var(--text-3);
+  font-size: 26rpx;
+}
+
+.report-chart {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding: 24rpx;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+  margin-bottom: 28rpx;
+}
+
+.report-chart__col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.report-chart__bar-wrap {
+  height: 180rpx;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.report-chart__bar {
+  width: 16rpx;
+  border-radius: 999rpx;
+  background: linear-gradient(180deg, var(--brand-accent), var(--brand-primary));
+  min-height: 8rpx;
+}
+
+.report-chart__lbl {
+  margin-top: 12rpx;
+  color: var(--text-3);
+  font-size: 22rpx;
+}
+
+.report-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  margin-bottom: 32rpx;
+}
+
+.report-stat {
+  flex: 1 1 40%;
+  padding: 24rpx;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}
+
+.report-stat__v {
+  display: block;
+  color: var(--brand-accent);
+  font-size: 40rpx;
+  font-weight: 900;
+}
+
+.report-stat__k {
+  display: block;
+  margin-top: 6rpx;
+  color: var(--text-3);
+  font-size: 22rpx;
+}
+
+.report__h {
+  display: block;
+  margin-bottom: 16rpx;
+  color: var(--text-1);
+  font-size: 30rpx;
+  font-weight: 800;
+}
+
+.report-root {
+  margin-bottom: 20rpx;
+}
+
+.report-root__head {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8rpx;
+}
+
+.report-root__form {
+  color: var(--text-1);
+  font-size: 26rpx;
+  font-weight: 700;
+}
+
+.report-root__pct {
+  color: var(--text-3);
+  font-size: 24rpx;
+}
+
+.report-root__track {
+  height: 12rpx;
+  border-radius: 999rpx;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.report-root__fill {
+  height: 100%;
+  border-radius: 999rpx;
+  background: linear-gradient(90deg, var(--brand-primary), var(--brand-accent));
+}
+
+.report-ach {
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-md);
+}
+
+.report-ach__t {
+  color: var(--text-1);
+  font-size: 28rpx;
+  font-weight: 800;
+}
+
+.report-ach__d {
+  display: block;
+  margin-top: 8rpx;
+  color: var(--text-2);
+  font-size: 24rpx;
+  line-height: 1.5;
+}
