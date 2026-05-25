@@ -2,6 +2,7 @@ import type { ReactElement} from 'react';
 import { useMemo, useState } from 'react';
 import { Text, View } from '@tarojs/components';
 import type { ExampleHighlightSpan, ExampleItem } from '@/services/api/types';
+import { playAudioUrl } from '@/utils/play-audio';
 import './index.scss';
 
 const levelLabels: Record<ExampleItem['level'], string> = {
@@ -46,6 +47,19 @@ function renderSentence(sentence: string, spans: ExampleHighlightSpan[] | null):
   return <Text className="example-card__sentence">{nodes}</Text>;
 }
 
+function pickExampleAudio(example: ExampleItem): { url: string | null; label: string } | null {
+  if (example.audioUsUrl) {
+    return { url: example.audioUsUrl, label: '美音' };
+  }
+  if (example.audioUkUrl) {
+    return { url: example.audioUkUrl, label: '英音' };
+  }
+  if (example.audioSlowUrl) {
+    return { url: example.audioSlowUrl, label: '慢速' };
+  }
+  return null;
+}
+
 export function ExampleList(props: ExampleListProps): ReactElement {
   const { examples } = props;
   const [filter, setFilter] = useState<'all' | ExampleItem['level']>('all');
@@ -57,6 +71,14 @@ export function ExampleList(props: ExampleListProps): ReactElement {
     }
     return examples.filter((e) => e.level === filter);
   }, [examples, filter]);
+
+  if (examples.length === 0) {
+    return (
+      <View className="example-list">
+        <Text className="example-list__empty">暂无例句，稍后接入分层例句库</Text>
+      </View>
+    );
+  }
 
   return (
     <View className="example-list">
@@ -70,18 +92,45 @@ export function ExampleList(props: ExampleListProps): ReactElement {
         </Text>
       </View>
 
-      {filtered.map((example) => (
-        <View key={example.id} className={`example-card is-${example.level}`}>
-          <View className="example-card__meta">
-            <Text className="example-card__badge">{levelLabels[example.level]}</Text>
-            <Text className="example-card__source">{example.source}</Text>
+      {filtered.length === 0 ? (
+        <Text className="example-list__empty">该层级暂无例句</Text>
+      ) : null}
+
+      {filtered.map((example) => {
+        const audio = pickExampleAudio(example);
+        return (
+          <View key={example.id} className={`example-card is-${example.level}`}>
+            <View className="example-card__meta">
+              <Text className="example-card__badge">{levelLabels[example.level]}</Text>
+              <Text className="example-card__source">{example.source}</Text>
+              {example.likes > 0 ? (
+                <Text className="example-card__likes">♥ {example.likes}</Text>
+              ) : null}
+              {audio ? (
+                <Text
+                  className="example-card__audio"
+                  onClick={() => playAudioUrl(audio.url, audio.label)}
+                >
+                  播放
+                </Text>
+              ) : null}
+            </View>
+            {renderSentence(example.sentence, example.highlightSpans)}
+            {example.grammarTags && example.grammarTags.length > 0 ? (
+              <View className="example-card__tags">
+                {example.grammarTags.map((tag) => (
+                  <Text key={tag} className="example-card__tag">
+                    {tag}
+                  </Text>
+                ))}
+              </View>
+            ) : null}
+            {showTranslation ? (
+              <Text className="example-card__translation">{example.translation}</Text>
+            ) : null}
           </View>
-          {renderSentence(example.sentence, example.highlightSpans)}
-          {showTranslation ? (
-            <Text className="example-card__translation">{example.translation}</Text>
-          ) : null}
-        </View>
-      ))}
+        );
+      })}
     </View>
   );
 }

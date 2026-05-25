@@ -54,6 +54,14 @@ function normalizeSplitPattern(raw: unknown): WordSplitSegment[] | null {
   return out.length > 0 ? out : null;
 }
 
+function normalizeLevelTags(raw: unknown): WordDetail['level'] | null {
+  if (!Array.isArray(raw)) {
+    return null;
+  }
+  const out = raw.filter((item): item is string => typeof item === 'string' && item.length > 0);
+  return out.length > 0 ? out : null;
+}
+
 function normalizePos(raw: unknown): WordDetail['pos'] {
   if (!Array.isArray(raw)) {
     return [];
@@ -97,7 +105,19 @@ export function wordRowToDetail(row: unknown): WordDetail | null {
     phoneticUs: pickString(row, ['phoneticUs', 'phonetic_us']) ?? fallback?.word.phoneticUs ?? null,
     audioUkUrl: pickString(row, ['audioUkUrl', 'audio_uk_url']) ?? fallback?.word.audioUkUrl ?? null,
     audioUsUrl: pickString(row, ['audioUsUrl', 'audio_us_url']) ?? fallback?.word.audioUsUrl ?? null,
+    audioSlowUrl:
+      pickString(row, ['audioSlowUrl', 'audio_slow_url']) ?? fallback?.word.audioSlowUrl ?? null,
+    frequency:
+      typeof row.frequency === 'number' && Number.isFinite(row.frequency)
+        ? row.frequency
+        : (fallback?.word.frequency ?? null),
+    difficulty:
+      typeof row.difficulty === 'number' && Number.isFinite(row.difficulty)
+        ? row.difficulty
+        : (fallback?.word.difficulty ?? null),
+    level: normalizeLevelTags(row.level) ?? fallback?.word.level ?? [],
     pos: posParsed.length > 0 ? posParsed : (fallback?.word.pos ?? []),
+    scenes: fallback?.word.scenes ?? [],
     splitPattern:
       splitPattern.length > 0
         ? splitPattern

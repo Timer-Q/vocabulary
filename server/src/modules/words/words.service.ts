@@ -1,6 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma.service';
-import { SplitWordResult, WordDetail, WordSplitSegment } from './words.types';
+import {
+  PosEntry,
+  SplitWordResult,
+  WordDetail,
+  WordScene,
+  WordSplitSegment,
+} from './words.types';
 
 @Injectable()
 export class WordsService {
@@ -26,7 +32,12 @@ export class WordsService {
       phoneticUs: word.phoneticUs,
       audioUkUrl: word.audioUkUrl,
       audioUsUrl: word.audioUsUrl,
-      pos: word.pos,
+      audioSlowUrl: word.audioSlowUrl,
+      frequency: word.frequency,
+      difficulty: word.difficulty,
+      level: this.normalizeLevel(word.level),
+      pos: this.normalizePos(word.pos),
+      scenes: this.normalizeScenes(word.scenes),
       splitPattern: this.buildSplitPattern(word.splitPattern, word.roots),
       media: word.media.map((item) => ({
         type: item.type,
@@ -64,6 +75,59 @@ export class WordsService {
     };
   }
 
+  private normalizePos(raw: unknown): PosEntry[] {
+    if (!Array.isArray(raw)) {
+      return [];
+    }
+    const out: PosEntry[] = [];
+    for (const item of raw) {
+      if (typeof item !== 'object' || item === null) {
+        continue;
+      }
+      const row = item as Record<string, unknown>;
+      const pos = typeof row.pos === 'string' ? row.pos : null;
+      const meaning = typeof row.meaning === 'string' ? row.meaning : null;
+      if (pos && meaning) {
+        out.push({ pos, meaning });
+      }
+    }
+    return out;
+  }
+
+  private normalizeLevel(raw: unknown): string[] {
+    if (!Array.isArray(raw)) {
+      return [];
+    }
+    return raw.filter((item): item is string => typeof item === 'string' && item.length > 0);
+  }
+
+  private normalizeScenes(raw: unknown): WordScene[] {
+    if (!Array.isArray(raw)) {
+      return [];
+    }
+    const out: WordScene[] = [];
+    for (const item of raw) {
+      if (typeof item === 'string' && item.length > 0) {
+        out.push({ title: item });
+        continue;
+      }
+      if (typeof item !== 'object' || item === null) {
+        continue;
+      }
+      const row = item as Record<string, unknown>;
+      const title = typeof row.title === 'string' ? row.title : null;
+      if (!title) {
+        continue;
+      }
+      const description =
+        typeof row.description === 'string' && row.description.length > 0
+          ? row.description
+          : undefined;
+      out.push(description ? { title, description } : { title });
+    }
+    return out;
+  }
+
   private buildSplitPattern(
     cachedPattern: unknown,
     roots: Array<{
@@ -81,6 +145,7 @@ export class WordsService {
       type: item.position,
       meaning: item.root.meaning,
       rootId: item.root.id.toString(),
+      rootForm: item.position === 'root' ? item.root.form : null,
     }));
   }
 }

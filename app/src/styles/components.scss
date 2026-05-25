@@ -1,0 +1,150 @@
+// 共享 UI 模式（对齐 iOS 分组列表 + 系统按钮）
+
+.ui-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.ui-section__header {
+  padding: 8rpx 8rpx 0;
+  color: var(--label-secondary);
+  font-size: var(--font-footnote);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.ui-card {
+  padding: 28rpx;
+  border-radius: var(--radius-lg);
+  background: var(--background-secondary-grouped);
+  box-shadow: var(--shadow-sm);
+}
+
+.ui-card--inset {
+  overflow: hidden;
+}
+
+.ui-card--inset .ui-row + .ui-row {
+  border-top: 1rpx solid var(--separator);
+}
+
+.ui-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+  padding: 24rpx 28rpx;
+  background: var(--background-secondary-grouped);
+}
+
+.ui-pressable {
+  transition: transform 0.2s var(--ease-spring), opacity 0.2s var(--ease-out);
+}
+
+.ui-pressable:active {
+  transform: scale(var(--press-scale));
+  opacity: var(--press-opacity);
+}
+
+.ui-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 88rpx;
+  padding: 0 32rpx;
+  border-radius: var(--radius-button);
+  font-size: var(--font-callout);
+  font-weight: 600;
+  border: none;
+  transition: transform 0.2s var(--ease-spring), opacity 0.2s var(--ease-out);
+}
+
+.ui-btn:active {
+  transform: scale(var(--press-scale));
+  opacity: var(--press-opacity);
+}
+
+.ui-btn--filled {
+  background: var(--tint);
+  color: #ffffff;
+}
+
+.ui-btn--tinted {
+  background: var(--fill-tertiary);
+  color: var(--tint);
+}
+
+.ui-btn--plain {
+  background: transparent;
+  color: var(--tint);
+}
+
+.ui-btn--gray {
+  background: var(--fill-secondary);
+  color: var(--label);
+}
+
+.ui-chip {
+  padding: 12rpx 24rpx;
+  border-radius: 999rpx;
+  background: var(--fill-tertiary);
+  color: var(--label);
+  font-size: var(--font-subhead);
+  font-weight: 600;
+  transition: background 0.2s var(--ease-out), color 0.2s var(--ease-out);
+}
+
+.ui-chip.is-active {
+  background: var(--tint);
+  color: #ffffff;
+}
+
+.ui-link {
+  color: var(--link);
+  font-size: var(--font-subhead);
+  font-weight: 600;
+}
+
+/* 小程序 hover-class（按压即时反馈，比 :active 更可靠） */
+.ui-hover-press {
+  transform: scale(var(--hover-scale)) !important;
+  opacity: var(--press-opacity) !important;
+  transition: transform 0.12s var(--ease-bounce), opacity 0.12s var(--ease-out) !important;
+}
+
+.ui-hover-press--light {
+  transform: scale(var(--hover-scale-light)) !important;
+  opacity: 0.88 !important;
+  transition: transform 0.1s var(--ease-bounce), opacity 0.1s var(--ease-out) !important;
+}
+
+.ui-hover-press--bounce {
+  transform: scale(1.06) !important;
+  opacity: 1 !important;
+  transition: transform 0.15s var(--ease-bounce), opacity 0.15s var(--ease-out) !important;
+}
+
+.ui-shimmer-wrap {
+  position: relative;
+  overflow: hidden;
+}
+
+.ui-shimmer-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.35) 50%,
+    transparent 65%
+  );
+  transform: translateX(-120%);
+  pointer-events: none;
+}
+
+.ui-shimmer-wrap.is-shimmering::after {
+  animation: ui-shimmer 1.2s var(--ease-out) 1;
+}

@@ -1,4 +1,5 @@
 import type { ExampleItem, WordDetail } from '@/services/api/types';
+import type { MorphemeKind, MorphemeLevel } from '@/types/roots';
 
 /** Tab 学习会话模式（与后端 learn 概念对齐） */
 export type SessionMode = 'idle' | 'new' | 'review';
@@ -22,10 +23,14 @@ export interface PlanSummary {
 export interface RootDerivative {
   spelling: string;
   gloss: string;
+  wordId?: string;
+  isPreview?: boolean;
 }
 
 export interface RootDetailData {
   id: string;
+  kind: MorphemeKind;
+  level: MorphemeLevel;
   form: string;
   originKey: 'latin' | 'greek' | 'old_english' | 'french' | 'other';
   originLabel: string;

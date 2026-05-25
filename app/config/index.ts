@@ -17,6 +17,9 @@ const config = defineConfig<'webpack5'>(() => ({
   alias: {
     '@': path.resolve(__dirname, '..', 'src'),
   },
+  env: {
+    TARO_APP_API_BASE: JSON.stringify(process.env.TARO_APP_API_BASE ?? 'http://127.0.0.1:3100/v1'),
+  },
   mini: {
     postcss: {
       pxtransform: {

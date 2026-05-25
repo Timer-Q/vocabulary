@@ -1,13 +1,18 @@
 import Taro from '@tarojs/taro';
-import type { ReactElement} from 'react';
-import { useMemo } from 'react';
+import type { ReactElement } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Button, Text, View } from '@tarojs/components';
+import { HOVER_PRESS, HOVER_PRESS_LIGHT, HOVER_STAY_MS } from '@/constants/interaction';
 import { ExampleList } from '@/components/example-list';
 import { WordCard } from '@/components/word-card';
+import { useTabSelected } from '@/hooks/use-tab-selected';
 import { useLearningStore } from '@/store/learning';
+import { hapticLight, hapticMedium, hapticSuccess } from '@/utils/haptic';
 import './index.scss';
 
 export default function LearnPage(): ReactElement {
+  useTabSelected(2);
+
   const sessionMode = useLearningStore((s) => s.sessionMode);
   const sessionFinished = useLearningStore((s) => s.sessionFinished);
   const queue = useLearningStore((s) => s.queue);
@@ -66,21 +71,51 @@ export default function LearnPage(): ReactElement {
     Taro.navigateTo({ url: `/pages/word-detail/index?spelling=${encodeURIComponent(spelling)}` });
   };
 
+  useEffect(() => {
+    if (sessionFinished) {
+      hapticSuccess();
+    }
+  }, [sessionFinished]);
+
   if (sessionFinished) {
     return (
       <View className="page learn-page">
         <Text className="learn-page__title">{title}</Text>
         <Text className="learn-page__subtitle">{subtitle}</Text>
-        <View className="learn-done">
+        <View className="learn-done ui-animate-bounce">
+          <View className="learn-done__celebrate" aria-hidden>
+            <Text className="learn-done__emoji">✓</Text>
+          </View>
           <Text className="learn-done__line">本轮已答 {sessionAnswered} 词</Text>
           <Text className="learn-done__line">印象正确感 {accuracyLabel}</Text>
-          <Button className="learn-done__primary" onClick={() => replaySession()}>
+          <Button
+            className="learn-done__primary"
+            hoverClass={HOVER_PRESS}
+            hoverStayTime={HOVER_STAY_MS}
+            onClick={() => {
+              hapticMedium();
+              replaySession();
+            }}
+          >
             再练一组
           </Button>
-          <Button className="learn-done__secondary" onClick={() => dismissCompletion()}>
+          <Button
+            className="learn-done__secondary"
+            hoverClass={HOVER_PRESS}
+            hoverStayTime={HOVER_STAY_MS}
+            onClick={() => {
+              hapticLight();
+              dismissCompletion();
+            }}
+          >
             完成
           </Button>
-          <Button className="learn-done__ghost" onClick={() => Taro.switchTab({ url: '/pages/home/index' })}>
+          <Button
+            className="learn-done__ghost"
+            hoverClass={HOVER_PRESS_LIGHT}
+            hoverStayTime={HOVER_STAY_MS}
+            onClick={() => Taro.switchTab({ url: '/pages/home/index' })}
+          >
             回首页
           </Button>
         </View>
@@ -95,7 +130,12 @@ export default function LearnPage(): ReactElement {
         <Text className="learn-page__subtitle">从首页选择「新词」或「复习」开始一组学习</Text>
         <View className="learn-empty">
           <Text className="learn-empty__hint">今日小步前进，从一组词开始。</Text>
-          <Button className="learn-empty__btn" onClick={() => Taro.switchTab({ url: '/pages/home/index' })}>
+          <Button
+            className="learn-empty__btn"
+            hoverClass={HOVER_PRESS}
+            hoverStayTime={HOVER_STAY_MS}
+            onClick={() => Taro.switchTab({ url: '/pages/home/index' })}
+          >
             去首页
           </Button>
         </View>
@@ -107,13 +147,23 @@ export default function LearnPage(): ReactElement {
 
   return (
     <View className="page learn-page">
-      <Text className="learn-page__title">{title}</Text>
-      <Text className="learn-page__subtitle">{subtitle}</Text>
+      <View className="learn-page__header">
+        <View>
+          <Text className="learn-page__title">{title}</Text>
+          <Text className="learn-page__subtitle">{subtitle}</Text>
+        </View>
+        <View className="learn-page__badge">
+          <Text className="learn-page__badge-num">
+            {currentIndex + 1}/{queue.length}
+          </Text>
+        </View>
+      </View>
 
       <View className="learn-page__progress">
-        <Text className="learn-page__progress-text">
-          {currentIndex + 1} / {queue.length}
-        </Text>
+        <View
+          className="learn-page__progress-fill"
+          style={{ width: `${((currentIndex + 1) / queue.length) * 100}%` }}
+        />
       </View>
 
       <WordCard

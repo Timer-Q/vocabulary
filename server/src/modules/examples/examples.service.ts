@@ -35,6 +35,36 @@ export class ExamplesService {
     }));
   }
 
+  async listByWordIds(wordIds: bigint[], limit = 5): Promise<ExampleItem[]> {
+    if (wordIds.length === 0) {
+      return [];
+    }
+    const examples = await this.prisma.example.findMany({
+      where: {
+        wordId: { in: wordIds },
+        status: ContentStatus.published,
+      },
+      orderBy: [{ likes: 'desc' }, { level: 'asc' }],
+      take: limit,
+    });
+
+    return examples.map((example) => ({
+      id: example.id.toString(),
+      wordId: example.wordId.toString(),
+      level: example.level,
+      source: example.source,
+      sourceMeta: example.sourceMeta,
+      sentence: example.sentence,
+      translation: example.translation,
+      audioUkUrl: example.audioUkUrl,
+      audioUsUrl: example.audioUsUrl,
+      audioSlowUrl: example.audioSlowUrl,
+      highlightSpans: example.highlightSpans,
+      grammarTags: example.grammarTags,
+      likes: example.likes,
+    }));
+  }
+
   async listByRoot(rootId: number, limit = 3): Promise<ExampleItem[]> {
     const examples = await this.prisma.example.findMany({
       where: {

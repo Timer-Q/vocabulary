@@ -10,6 +10,7 @@
     "dev:server": "pnpm --filter @vocabulary/server start:dev",
     "build": "pnpm --filter @vocabulary/app build && pnpm --filter @vocabulary/server build",
     "typecheck": "pnpm --filter @vocabulary/app typecheck && pnpm --filter @vocabulary/server typecheck",
+    "check:weapp": "node scripts/check-weapp-config.mjs",
     "lint": "pnpm --filter @vocabulary/app lint && pnpm --filter @vocabulary/server lint"
   },
   "engines": {

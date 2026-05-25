@@ -1,16 +1,17 @@
 .report__title {
   display: block;
-  color: var(--text-1);
-  font-size: 44rpx;
-  font-weight: 900;
+  color: var(--label);
+  font-size: var(--font-title2);
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .report__sub {
   display: block;
   margin-top: 8rpx;
   margin-bottom: 32rpx;
-  color: var(--text-3);
-  font-size: 26rpx;
+  color: var(--label-secondary);
+  font-size: var(--font-footnote);
 }
 
 .report-chart {
@@ -19,8 +20,8 @@
   align-items: flex-end;
   padding: 24rpx;
   border-radius: var(--radius-lg);
-  background: var(--surface);
-  box-shadow: var(--shadow-md);
+  background: var(--background-secondary-grouped);
+  box-shadow: var(--shadow-sm);
   margin-bottom: 28rpx;
 }
 
@@ -41,51 +42,63 @@
 .report-chart__bar {
   width: 16rpx;
   border-radius: 999rpx;
-  background: linear-gradient(180deg, var(--brand-accent), var(--brand-primary));
+  background: var(--tint);
   min-height: 8rpx;
+  opacity: 0.85;
 }
 
 .report-chart__lbl {
   margin-top: 12rpx;
-  color: var(--text-3);
-  font-size: 22rpx;
+  color: var(--label-tertiary);
+  font-size: var(--font-caption);
 }
 
 .report-stats {
   display: flex;
   flex-wrap: wrap;
-  gap: 16rpx;
+  gap: 12rpx;
   margin-bottom: 32rpx;
 }
 
 .report-stat {
   flex: 1 1 40%;
   padding: 24rpx;
-  border-radius: var(--radius-md);
-  background: var(--surface);
-  box-shadow: var(--shadow-md);
+  border-radius: var(--radius-lg);
+  background: var(--background-secondary-grouped);
+  box-shadow: var(--shadow-sm);
 }
 
 .report-stat__v {
   display: block;
-  color: var(--brand-accent);
+  color: var(--tint);
   font-size: 40rpx;
-  font-weight: 900;
+  font-weight: 700;
 }
 
 .report-stat__k {
   display: block;
   margin-top: 6rpx;
-  color: var(--text-3);
-  font-size: 22rpx;
+  color: var(--label-tertiary);
+  font-size: var(--font-caption);
+}
+
+.report__h-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16rpx;
 }
 
 .report__h {
-  display: block;
-  margin-bottom: 16rpx;
-  color: var(--text-1);
-  font-size: 30rpx;
-  font-weight: 800;
+  color: var(--label);
+  font-size: var(--font-callout);
+  font-weight: 700;
+}
+
+.report__h-link {
+  color: var(--link);
+  font-size: var(--font-subhead);
+  font-weight: 600;
 }
 
 .report-root {
@@ -99,47 +112,47 @@
 }
 
 .report-root__form {
-  color: var(--text-1);
-  font-size: 26rpx;
-  font-weight: 700;
+  color: var(--label);
+  font-size: var(--font-subhead);
+  font-weight: 600;
 }
 
 .report-root__pct {
-  color: var(--text-3);
-  font-size: 24rpx;
+  color: var(--label-tertiary);
+  font-size: var(--font-footnote);
 }
 
 .report-root__track {
   height: 12rpx;
   border-radius: 999rpx;
-  background: var(--border);
+  background: var(--fill-quaternary);
   overflow: hidden;
 }
 
 .report-root__fill {
   height: 100%;
   border-radius: 999rpx;
-  background: linear-gradient(90deg, var(--brand-primary), var(--brand-accent));
+  background: var(--tint);
 }
 
 .report-ach {
   padding: 24rpx;
-  margin-bottom: 16rpx;
+  margin-bottom: 12rpx;
   border-radius: var(--radius-lg);
-  background: var(--surface);
-  box-shadow: var(--shadow-md);
+  background: var(--background-secondary-grouped);
+  box-shadow: var(--shadow-sm);
 }
 
 .report-ach__t {
-  color: var(--text-1);
-  font-size: 28rpx;
-  font-weight: 800;
+  color: var(--label);
+  font-size: var(--font-callout);
+  font-weight: 700;
 }
 
 .report-ach__d {
   display: block;
   margin-top: 8rpx;
-  color: var(--text-2);
-  font-size: 24rpx;
+  color: var(--label-secondary);
+  font-size: var(--font-footnote);
   line-height: 1.5;
 }

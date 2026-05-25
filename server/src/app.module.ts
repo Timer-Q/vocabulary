@@ -11,6 +11,8 @@ import { MediaModule } from './modules/media/media.module';
 import { PrismaModule } from './common/prisma.module';
 import { ReviewModule } from './modules/review/review.module';
 import { StatsModule } from './modules/stats/stats.module';
+import { MindmapModule } from './modules/mindmap/mindmap.module';
+import { RootsModule } from './modules/roots/roots.module';
 import { WordsModule } from './modules/words/words.module';
 
 @Module({
@@ -32,6 +34,8 @@ import { WordsModule } from './modules/words/words.module';
     SupabaseModule,
     AuthModule,
     WordsModule,
+    RootsModule,
+    MindmapModule,
     ExamplesModule,
     LearnModule,
     ReviewModule,

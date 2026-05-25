@@ -5,9 +5,11 @@ export interface TodayPlan {
   examDate: string | null;
 }
 
+import type { TodayWordBrief } from './learn-word.mapper';
+
 export interface TodayLearningPayload {
-  newWords: unknown[];
-  reviewWords: unknown[];
+  newWords: TodayWordBrief[];
+  reviewWords: TodayWordBrief[];
   plan: TodayPlan | null;
 }
 

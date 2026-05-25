@@ -14,12 +14,30 @@ export const MVP_DEFAULT_PLAN: PlanSummary = {
   examDate: null,
 };
 
-const WORD_DEFAULTS: Pick<WordDetail, 'phoneticUk' | 'phoneticUs' | 'audioUkUrl' | 'audioUsUrl' | 'pos' | 'media'> = {
+const WORD_DEFAULTS: Pick<
+  WordDetail,
+  | 'phoneticUk'
+  | 'phoneticUs'
+  | 'audioUkUrl'
+  | 'audioUsUrl'
+  | 'audioSlowUrl'
+  | 'frequency'
+  | 'difficulty'
+  | 'level'
+  | 'pos'
+  | 'scenes'
+  | 'media'
+> = {
   phoneticUk: null,
   phoneticUs: null,
   audioUkUrl: null,
   audioUsUrl: null,
+  audioSlowUrl: null,
+  frequency: null,
+  difficulty: null,
+  level: [],
   pos: [],
+  scenes: [],
   media: [],
 };
 
@@ -267,6 +285,13 @@ const wordReconstruction: WordDetail = w({
   spelling: 'reconstruction',
   phoneticUk: '/ˌriːkənˈstrʌkʃn/',
   phoneticUs: '/ˌriːkənˈstrʌkʃn/',
+  frequency: 4200,
+  difficulty: 3,
+  level: ['cet4', 'cet6'],
+  scenes: [
+    { title: '灾后重建', description: '城市基础设施修复与恢复' },
+    { title: '历史修复', description: '古建筑与文化遗产的复原工程' },
+  ],
   pos: [{ pos: 'n', meaning: '重建；改造' }],
   splitPattern: [
     { form: 're-', type: 'prefix', meaning: '再', rootId: null },
@@ -288,6 +313,10 @@ const wordStructure: WordDetail = w({
   spelling: 'structure',
   phoneticUk: '/ˈstrʌktʃə(r)/',
   phoneticUs: '/ˈstrʌktʃər/',
+  frequency: 2800,
+  difficulty: 2,
+  level: ['cet4', 'cet6'],
+  scenes: [{ title: '建筑结构', description: '描述物体或系统的组成方式' }],
   pos: [{ pos: 'n', meaning: '结构；建筑物' }, { pos: 'v', meaning: '组织；安排' }],
   splitPattern: [
     { form: 'struct', type: 'root', meaning: '建造', rootId: '13' },
@@ -301,6 +330,10 @@ const wordConstruct: WordDetail = w({
   spelling: 'construct',
   phoneticUk: '/kənˈstrʌkt/',
   phoneticUs: '/kənˈstrʌkt/',
+  frequency: 5100,
+  difficulty: 2,
+  level: ['cet4'],
+  scenes: [{ title: '工程施工', description: '建造、搭建实体或抽象概念' }],
   pos: [{ pos: 'v', meaning: '建造；构思' }],
   splitPattern: [
     { form: 'con-', type: 'prefix', meaning: '共同', rootId: null },
@@ -332,9 +365,120 @@ export const MVP_ROOT_ID_TO_FORM: Record<string, string> = {
   '13': 'struct',
 };
 
+const MVP_ROOT_DICT: RootDetailData = {
+  id: '14',
+  kind: 'root',
+  level: 'core',
+  form: 'dict',
+  originKey: 'latin',
+  originLabel: '拉丁语 dicere',
+  meaning: '说、讲',
+  extendedMeaning: '字典记录「说法」，预测是「预先说出」。',
+  story: 'dict 是四六级高频词根，与言说、记录密切相关。',
+  derivatives: [
+    { spelling: 'dictionary', gloss: '字典' },
+    { spelling: 'predict', gloss: '预测' },
+    { spelling: 'contradict', gloss: '反驳' },
+  ],
+  examples: [],
+};
+
+const MVP_ROOT_PORT: RootDetailData = {
+  id: '15',
+  kind: 'root',
+  level: 'core',
+  form: 'port',
+  originKey: 'latin',
+  originLabel: '拉丁语 portare',
+  meaning: '携带、运输',
+  extendedMeaning: '出口是把货物「带出去」，机会是「带到面前」。',
+  story: 'port 家族与贸易、交通密切相关。',
+  derivatives: [
+    { spelling: 'transport', gloss: '运输' },
+    { spelling: 'export', gloss: '出口' },
+    { spelling: 'opportunity', gloss: '机会' },
+  ],
+  examples: [],
+};
+
+const MVP_PREFIX_RE: RootDetailData = {
+  id: 'mvp-prefix-re',
+  kind: 'prefix',
+  level: 'core',
+  form: 're-',
+  originKey: 'latin',
+  originLabel: '拉丁前缀',
+  meaning: '再、回',
+  extendedMeaning: 'rewrite、return、rebuild 表示再次或返回。',
+  derivatives: [
+    { spelling: 'rewrite', gloss: '重写' },
+    { spelling: 'reconstruction', gloss: '重建' },
+    { spelling: 'predict', gloss: '预测' },
+  ],
+  examples: [],
+};
+
+const MVP_PREFIX_PRE: RootDetailData = {
+  id: 'mvp-prefix-pre',
+  kind: 'prefix',
+  level: 'core',
+  form: 'pre-',
+  originKey: 'latin',
+  originLabel: '拉丁前缀',
+  meaning: '预先、在前',
+  extendedMeaning: 'predict、preview、prepare 表示提前。',
+  derivatives: [
+    { spelling: 'predict', gloss: '预测' },
+    { spelling: 'preparation', gloss: '准备' },
+  ],
+  examples: [],
+};
+
+const MVP_PREFIX_DIS: RootDetailData = {
+  id: 'mvp-prefix-dis',
+  kind: 'prefix',
+  level: 'core',
+  form: 'dis-',
+  originKey: 'latin',
+  originLabel: '拉丁前缀',
+  meaning: '分开、否定',
+  extendedMeaning: 'disagree、disconnect 表示分离或否定。',
+  derivatives: [
+    { spelling: 'disagree', gloss: '不同意' },
+    { spelling: 'destructive', gloss: '破坏性的' },
+  ],
+  examples: [],
+};
+
+const MVP_SUFFIX_ION: RootDetailData = {
+  id: 'mvp-suffix-ion',
+  kind: 'suffix',
+  level: 'core',
+  form: '-ion',
+  originKey: 'latin',
+  originLabel: '拉丁后缀',
+  meaning: '行为、结果',
+  extendedMeaning: 'action、construction 表示动作或结果。',
+  derivatives: [
+    { spelling: 'reconstruction', gloss: '重建' },
+    { spelling: 'construction', gloss: '建设' },
+    { spelling: 'dictionary', gloss: '字典' },
+  ],
+  examples: [],
+};
+
+export const MVP_MORPHEME_LIBRARY: Record<string, RootDetailData> = {
+  're-': MVP_PREFIX_RE,
+  'pre-': MVP_PREFIX_PRE,
+  'dis-': MVP_PREFIX_DIS,
+  '-ion': MVP_SUFFIX_ION,
+};
+
 export const MVP_ROOT_LIBRARY: Record<string, RootDetailData> = {
   struct: {
     id: '13',
+    kind: 'root',
+    level: 'core',
     form: 'struct',
     originKey: 'latin',
     originLabel: '拉丁语 struere',
@@ -380,6 +524,8 @@ export const MVP_ROOT_LIBRARY: Record<string, RootDetailData> = {
       },
     ],
   },
+  dict: MVP_ROOT_DICT,
+  port: MVP_ROOT_PORT,
 };
 
 export const MVP_REPORT: LearningReport = {

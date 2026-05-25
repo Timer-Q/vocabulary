@@ -1,16 +1,22 @@
 import Taro from '@tarojs/taro';
+import { API_REQUEST_TIMEOUT_MS, getApiBaseUrl } from '@/config/api';
 import { ApiResponse } from './types';
-
-const API_BASE_URL = 'http://localhost:3000/v1';
 
 export async function request<T>(
   path: string,
   options: Omit<Taro.request.Option, 'url'> = {},
 ): Promise<T> {
-  const token = Taro.getStorageSync<string>('token');
+  let token = '';
+  try {
+    token = Taro.getStorageSync<string>('token') ?? '';
+  } catch {
+    /* 游客模式可能无法读 storage */
+  }
+
   const response = await Taro.request<ApiResponse<T>>({
     ...options,
-    url: `${API_BASE_URL}${path}`,
+    url: `${getApiBaseUrl()}${path}`,
+    timeout: options.timeout ?? API_REQUEST_TIMEOUT_MS,
     header: {
       'Content-Type': 'application/json',
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -18,8 +24,8 @@ export async function request<T>(
     },
   });
 
-  if (response.statusCode >= 400 || response.data.code !== 0) {
-    throw new Error(response.data.message ?? 'request_failed');
+  if (response.statusCode >= 400 || response.data?.code !== 0) {
+    throw new Error(response.data?.message ?? `request_failed_${response.statusCode}`);
   }
 
   return response.data.data;

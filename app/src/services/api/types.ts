@@ -10,11 +10,20 @@ export interface WordSplitSegment {
   type: 'prefix' | 'root' | 'suffix';
   meaning: string;
   rootId: string | null;
+  rootForm?: string | null;
 }
 
 export interface PosEntry {
   pos: string;
   meaning: string;
+}
+
+/** 考试/词库等级标签，如 cet4、cet6 */
+export type WordLevelTag = string;
+
+export interface WordScene {
+  title: string;
+  description?: string;
 }
 
 export interface ExampleHighlightSpan {
@@ -33,7 +42,12 @@ export interface WordDetail {
   phoneticUs: string | null;
   audioUkUrl: string | null;
   audioUsUrl: string | null;
+  audioSlowUrl: string | null;
+  frequency: number | null;
+  difficulty: number | null;
+  level: WordLevelTag[];
   pos: PosEntry[];
+  scenes: WordScene[];
   splitPattern: WordSplitSegment[];
   media: Array<{
     type: string;

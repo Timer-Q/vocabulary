@@ -79,6 +79,8 @@ export const useLearningStore = create<LearningStore>((set, get) => ({
   hydrated: false,
 
   hydrateToday: async () => {
+    // 先用 MVP 展示，避免开发者工具/游客模式下长时间等待后端
+    set({ hydrated: true });
     try {
       const remote = await api.learn.today(1);
       const { newBundles, reviewBundles } = partitionBundlesFromToday(remote);
@@ -90,15 +92,9 @@ export const useLearningStore = create<LearningStore>((set, get) => ({
             examDate: remote.plan.examDate,
           }
         : MVP_DEFAULT_PLAN;
-      set({ newBundles, reviewBundles, planSummary: plan, hydrated: true });
+      set({ newBundles, reviewBundles, planSummary: plan });
     } catch {
-      const fallback = getMvpBundles();
-      set({
-        newBundles: fallback,
-        reviewBundles: fallback,
-        planSummary: MVP_DEFAULT_PLAN,
-        hydrated: true,
-      });
+      /* 保持初始 MVP 词表与计划 */
     }
   },
 

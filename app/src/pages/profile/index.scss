@@ -1,59 +1,81 @@
-.profile-page__title {
-  display: block;
-  margin-bottom: 8rpx;
-  color: var(--text-1);
-  font-size: 42rpx;
-  font-weight: 800;
+.profile-hero {
+  padding: 8rpx 8rpx 24rpx;
 }
 
-.profile-page__sub {
+.profile-hero__title {
   display: block;
-  margin-bottom: 28rpx;
-  color: var(--text-3);
-  font-size: 24rpx;
+  color: var(--label);
+  font-size: var(--font-title1);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.profile-hero__sub {
+  display: block;
+  margin-top: 12rpx;
+  color: var(--label-secondary);
+  font-size: var(--font-footnote);
+  line-height: 1.45;
 }
 
 .profile-grid {
   display: flex;
-  gap: 16rpx;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-bottom: 32rpx;
 }
 
 .profile-card {
-  flex: 1;
+  flex: 1 1 40%;
   padding: 28rpx;
   border-radius: var(--radius-lg);
-  background: var(--surface);
-  box-shadow: var(--shadow-md);
+  background: var(--background-secondary-grouped);
+  box-shadow: var(--shadow-sm);
+}
+
+.profile-card--wide {
+  flex: 1 1 100%;
 }
 
 .profile-card__value {
   display: block;
-  color: var(--brand-accent);
+  color: var(--tint);
   font-size: 48rpx;
-  font-weight: 800;
+  font-weight: 700;
+  letter-spacing: -0.02em;
 }
 
 .profile-card__label {
   display: block;
   margin-top: 8rpx;
-  color: var(--text-2);
-  font-size: 24rpx;
+  color: var(--label-secondary);
+  font-size: var(--font-caption);
   line-height: 1.4;
 }
 
-.profile-links {
+.profile-actions {
   display: flex;
   flex-direction: column;
-  gap: 20rpx;
-  margin-top: 40rpx;
+  gap: 12rpx;
 }
 
-.profile-link {
-  padding: 24rpx 28rpx;
-  border-radius: var(--radius-md);
-  background: var(--surface);
-  color: var(--brand-primary);
-  font-size: 28rpx;
-  font-weight: 700;
-  box-shadow: var(--shadow-md);
+.profile-action {
+  padding: 28rpx;
+  border-radius: var(--radius-button);
+  background: var(--fill-tertiary);
+  color: var(--label);
+  font-size: var(--font-callout);
+  font-weight: 600;
+  text-align: center;
+  transition: transform 0.2s var(--ease-spring), opacity 0.2s var(--ease-out);
+}
+
+.profile-action:active {
+  transform: scale(var(--press-scale));
+  opacity: var(--press-opacity);
+}
+
+.profile-action--primary {
+  background: var(--tint);
+  color: #ffffff;
 }

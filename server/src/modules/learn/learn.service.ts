@@ -3,6 +3,7 @@ import { PrismaService } from '../../common/prisma.service';
 import { AnswerWordDto } from './dto/answer-word.dto';
 import { UpsertPlanDto } from './dto/upsert-plan.dto';
 import { AnswerResultPayload, TodayLearningPayload } from './learn.types';
+import { mapWordToTodayBrief } from './learn-word.mapper';
 import { calculateNextReview } from './sm2';
 
 @Injectable()
@@ -30,8 +31,8 @@ export class LearnService {
     });
 
     return {
-      newWords,
-      reviewWords: reviewWords.map((item) => item.word),
+      newWords: newWords.map(mapWordToTodayBrief),
+      reviewWords: reviewWords.map((item) => mapWordToTodayBrief(item.word)),
       plan: plan
         ? {
             dailyNew: plan.dailyNew,

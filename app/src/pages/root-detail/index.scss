@@ -3,6 +3,18 @@
   font-size: 28rpx;
 }
 
+.root-detail__empty-inline {
+  display: block;
+  color: var(--text-3);
+  font-size: 26rpx;
+  padding: 8rpx 0 24rpx;
+}
+
+.root-detail__pill--kind {
+  background: rgba(27, 42, 78, 0.08);
+  color: var(--text-2);
+}
+
 .root-detail__form {
   display: block;
   color: var(--text-1);
@@ -11,8 +23,25 @@
   letter-spacing: 0.04em;
 }
 
+.root-detail__hero {
+  margin-bottom: 8rpx;
+}
+
 .root-detail__meta {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
   margin-top: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.root-detail__mindmap-btn {
+  padding: 8rpx 20rpx;
+  border-radius: 999rpx;
+  background: var(--brand-primary);
+  color: #fff;
+  font-size: 22rpx;
+  font-weight: 700;
 }
 
 .root-detail__pill {
@@ -75,6 +104,10 @@
   color: var(--brand-primary);
   font-size: 26rpx;
   font-weight: 700;
+}
+
+.root-detail__chip--preview {
+  color: var(--text-2);
 }
 
 .root-detail__chip-gloss {

@@ -1,10 +1,17 @@
 {
+  "miniprogramRoot": "app/dist/",
+  "projectname": "vocabulary-app",
+  "description": "词根记忆背单词小程序",
+  "appid": "wx143fcc95db3e4303",
+  "compileType": "miniprogram",
+  "libVersion": "3.16.0",
   "setting": {
     "es6": true,
     "postcss": true,
     "minified": true,
     "uglifyFileName": false,
     "enhance": true,
+    "urlCheck": false,
     "packNpmRelationList": [],
     "babelSetting": {
       "ignore": [],
@@ -12,14 +19,22 @@
       "outputPath": ""
     },
     "useCompilerPlugins": false,
-    "minifyWXML": true
+    "minifyWXML": true,
+    "compileHotReLoad": true,
+    "coverView": true,
+    "showShadowRootInWxmlPanel": true,
+    "autoAudits": false
   },
-  "compileType": "miniprogram",
   "simulatorPluginLibVersion": {},
   "packOptions": {
-    "ignore": [],
+    "ignore": [
+      { "type": "folder", "value": "server" },
+      { "type": "folder", "value": "docs" },
+      { "type": "folder", "value": "node_modules" },
+      { "type": "folder", "value": "app/node_modules" },
+      { "type": "folder", "value": "app/src" }
+    ],
     "include": []
   },
-  "appid": "wxd4d4a2881ca9fb31",
   "editorSetting": {}
 }

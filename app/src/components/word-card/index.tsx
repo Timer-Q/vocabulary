@@ -1,12 +1,15 @@
 import Taro from '@tarojs/taro';
-import type { ReactElement} from 'react';
-import { useCallback, useRef } from 'react';
+import type { ReactElement } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Image, Text, View } from '@tarojs/components';
 import type { BaseEventOrig, ITouchEvent } from '@tarojs/components/types/common';
-import { MVP_ROOT_ID_TO_FORM } from '@/data/mvp';
+import { HOVER_PRESS, HOVER_PRESS_LIGHT, HOVER_STAY_MS } from '@/constants/interaction';
+import { resolveRootForm } from '@/utils/root-form';
 import { ProgressRing } from '@/components/progress-ring';
 import type { AnswerGrade } from '@/types/learning';
 import type { WordDetail } from '@/services/api/types';
+import { playAudioUrl } from '@/utils/play-audio';
+import { hapticLight, hapticMedium, hapticSuccess, hapticWarning } from '@/utils/haptic';
 import './index.scss';
 
 export interface WordCardProps {
@@ -28,12 +31,40 @@ interface TouchRef {
   t: number;
 }
 
+type SwipeHint = 'left' | 'right' | 'up' | 'down' | null;
+type FlashTone = 'bad' | 'warn' | 'good' | 'great' | null;
+
 const gradeLabels: { grade: AnswerGrade; label: string; tone: string }[] = [
   { grade: 'unknown', label: '陌生', tone: 'is-unknown' },
   { grade: 'vague', label: '模糊', tone: 'is-vague' },
   { grade: 'known', label: '认识', tone: 'is-known' },
   { grade: 'mastered', label: '熟练', tone: 'is-mastered' },
 ];
+
+function flashToneForGrade(grade: AnswerGrade): FlashTone {
+  if (grade === 'unknown') {
+    return 'bad';
+  }
+  if (grade === 'vague') {
+    return 'warn';
+  }
+  if (grade === 'mastered') {
+    return 'great';
+  }
+  return 'good';
+}
+
+function hapticForGrade(grade: AnswerGrade): void {
+  if (grade === 'mastered') {
+    hapticSuccess();
+    return;
+  }
+  if (grade === 'unknown' || grade === 'vague') {
+    hapticWarning();
+    return;
+  }
+  hapticLight();
+}
 
 export function WordCard(props: WordCardProps): ReactElement {
   const {
@@ -50,25 +81,54 @@ export function WordCard(props: WordCardProps): ReactElement {
   } = props;
 
   const touchRef = useRef<TouchRef | null>(null);
+  const popTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const [swipeHint, setSwipeHint] = useState<SwipeHint>(null);
+  const [flashTone, setFlashTone] = useState<FlashTone>(null);
+  const [poppingGrade, setPoppingGrade] = useState<AnswerGrade | null>(null);
+  const [enterKey, setEnterKey] = useState(0);
+
   const primaryMeaning = word.pos[0]?.meaning ?? '查看详情';
 
-  const playAudio = useCallback(
-    (url: string | null | undefined, label: string) => {
-      if (!url) {
-        Taro.showToast({ title: '音频准备中', icon: 'none' });
-        return;
+  useEffect(() => {
+    setEnterKey((k) => k + 1);
+    setSwipeHint(null);
+    setFlashTone(null);
+    setPoppingGrade(null);
+  }, [word.spelling]);
+
+  useEffect(
+    () => () => {
+      if (popTimerRef.current) {
+        clearTimeout(popTimerRef.current);
       }
-      const ctx = Taro.createInnerAudioContext();
-      ctx.src = url;
-      ctx.onError(() => {
-        Taro.showToast({ title: `${label}播放失败`, icon: 'none' });
-        ctx.destroy();
-      });
-      ctx.onEnded(() => ctx.destroy());
-      ctx.play();
+      if (flashTimerRef.current) {
+        clearTimeout(flashTimerRef.current);
+      }
     },
     [],
   );
+
+  const triggerFeedback = (grade: AnswerGrade): void => {
+    hapticForGrade(grade);
+    setFlashTone(flashToneForGrade(grade));
+    setPoppingGrade(grade);
+    if (flashTimerRef.current) {
+      clearTimeout(flashTimerRef.current);
+    }
+    if (popTimerRef.current) {
+      clearTimeout(popTimerRef.current);
+    }
+    flashTimerRef.current = setTimeout(() => setFlashTone(null), 520);
+    popTimerRef.current = setTimeout(() => setPoppingGrade(null), 420);
+  };
+
+  const commitGrade = (grade: AnswerGrade): void => {
+    triggerFeedback(grade);
+    setSwipeHint(null);
+    onGrade(grade);
+  };
 
   const onTouchStart = (e: BaseEventOrig): void => {
     if (!('touches' in e)) {
@@ -80,57 +140,89 @@ export function WordCard(props: WordCardProps): ReactElement {
       return;
     }
     touchRef.current = { x: t.clientX, y: t.clientY, t: Date.now() };
+    setSwipeHint(null);
+  };
+
+  const onTouchMove = (e: BaseEventOrig): void => {
+    const start = touchRef.current;
+    if (!start || !('touches' in e)) {
+      return;
+    }
+    const te = e as ITouchEvent;
+    const t = te.touches?.[0];
+    if (!t) {
+      return;
+    }
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    const threshold = 28;
+    if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > threshold) {
+      setSwipeHint(dx < 0 ? 'left' : 'right');
+      return;
+    }
+    if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > threshold) {
+      setSwipeHint(dy < 0 ? 'up' : 'down');
+      return;
+    }
+    setSwipeHint(null);
   };
 
   const onTouchEnd = (e: BaseEventOrig): void => {
     const start = touchRef.current;
     touchRef.current = null;
     if (!('changedTouches' in e) || !start) {
+      setSwipeHint(null);
       return;
     }
     const te = e as ITouchEvent;
     const t = te.changedTouches?.[0];
     if (!t) {
+      setSwipeHint(null);
       return;
     }
     const dx = t.clientX - start.x;
     const dy = t.clientY - start.y;
     const dt = Date.now() - start.t;
     if (dt > 800) {
+      setSwipeHint(null);
       return;
     }
     if (Math.abs(dx) > 56 && Math.abs(dy) < 80) {
       if (dx < 0) {
-        onGrade('unknown');
+        commitGrade('unknown');
       } else {
-        onGrade('mastered');
+        commitGrade('mastered');
       }
       return;
     }
     if (dy < -72 && Math.abs(dx) < 56) {
       const rootSeg = word.splitPattern.find((s) => s.type === 'root');
-      const form =
-        (rootSeg?.rootId && MVP_ROOT_ID_TO_FORM[rootSeg.rootId]) ||
-        (rootSeg?.type === 'root' ? rootSeg.form.replace(/^-+|-+$/g, '') : null);
+      const form = rootSeg ? resolveRootForm(rootSeg) : null;
       if (form) {
+        hapticMedium();
         onOpenRoot(form);
       } else {
         Taro.showToast({ title: '暂无词根页', icon: 'none' });
       }
+      setSwipeHint(null);
+      return;
     }
     if (dy > 72 && Math.abs(dx) < 56) {
+      hapticLight();
       onToggleFavorite();
+      setSwipeHint(null);
+      return;
     }
+    setSwipeHint(null);
   };
 
   const onSegmentTap = (segment: (typeof word.splitPattern)[0]): void => {
     if (segment.type !== 'root') {
       return;
     }
-    const form =
-      (segment.rootId && MVP_ROOT_ID_TO_FORM[segment.rootId]) ||
-      segment.form.replace(/^-+|-+$/g, '');
+    const form = resolveRootForm(segment);
     if (form) {
+      hapticLight();
       onOpenRoot(form);
     }
   };
@@ -138,17 +230,74 @@ export function WordCard(props: WordCardProps): ReactElement {
   const cover = word.media[0];
 
   return (
-    <View className="word-card" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+    <View
+      key={`card-${word.spelling}-${enterKey}`}
+      className={`word-card ui-animate-in ${flashTone ? `is-flash-${flashTone}` : ''}`}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+      onTouchCancel={() => {
+        touchRef.current = null;
+        setSwipeHint(null);
+      }}
+    >
+      {flashTone ? <View className={`word-card__flash word-card__flash--${flashTone} ui-animate-flash`} /> : null}
+
+      {swipeHint === 'left' ? (
+        <View className="word-card__hint-overlay word-card__hint-overlay--left">
+          <Text className="word-card__hint-overlay-text">陌生</Text>
+        </View>
+      ) : null}
+      {swipeHint === 'right' ? (
+        <View className="word-card__hint-overlay word-card__hint-overlay--right">
+          <Text className="word-card__hint-overlay-text">熟练</Text>
+        </View>
+      ) : null}
+      {swipeHint === 'up' ? (
+        <View className="word-card__hint-overlay word-card__hint-overlay--up">
+          <Text className="word-card__hint-overlay-text">词根</Text>
+        </View>
+      ) : null}
+      {swipeHint === 'down' ? (
+        <View className="word-card__hint-overlay word-card__hint-overlay--down">
+          <Text className="word-card__hint-overlay-text">{isFavorite ? '已收藏' : '收藏'}</Text>
+        </View>
+      ) : null}
+
       <View className="word-card__top">
         <ProgressRing mastery={mastery} />
         <View className="word-card__top-actions">
-          <Text className="word-card__fav" onClick={onToggleFavorite}>
+          <Text
+            className={`word-card__fav ${isFavorite ? 'is-on' : ''}`}
+            hoverClass={HOVER_PRESS_LIGHT}
+            hoverStayTime={HOVER_STAY_MS}
+            onClick={() => {
+              hapticLight();
+              onToggleFavorite();
+            }}
+          >
             {isFavorite ? '♥' : '♡'}
           </Text>
-          <Text className="word-card__ghost-btn" onClick={() => onToggleFlip()}>
+          <Text
+            className="word-card__ghost-btn"
+            hoverClass={HOVER_PRESS_LIGHT}
+            hoverStayTime={HOVER_STAY_MS}
+            onClick={() => {
+              hapticLight();
+              onToggleFlip();
+            }}
+          >
             {flipped ? '正面' : '例句'}
           </Text>
-          <Text className="word-card__ghost-btn" onClick={onOpenDetail}>
+          <Text
+            className="word-card__ghost-btn"
+            hoverClass={HOVER_PRESS_LIGHT}
+            hoverStayTime={HOVER_STAY_MS}
+            onClick={() => {
+              hapticLight();
+              onOpenDetail();
+            }}
+          >
             详情
           </Text>
         </View>
@@ -160,10 +309,26 @@ export function WordCard(props: WordCardProps): ReactElement {
             <Text className="word-card__spelling">{word.spelling}</Text>
             <Text className="word-card__phonetic">{word.phoneticUk ?? word.phoneticUs ?? ''}</Text>
             <View className="word-card__speak-row">
-              <Text className="word-card__mini-btn" onClick={() => playAudio(word.audioUkUrl, '英音')}>
+              <Text
+                className="word-card__mini-btn"
+                hoverClass={HOVER_PRESS_LIGHT}
+                hoverStayTime={HOVER_STAY_MS}
+                onClick={() => {
+                  hapticLight();
+                  playAudioUrl(word.audioUkUrl, '英音');
+                }}
+              >
                 英音
               </Text>
-              <Text className="word-card__mini-btn" onClick={() => playAudio(word.audioUsUrl, '美音')}>
+              <Text
+                className="word-card__mini-btn"
+                hoverClass={HOVER_PRESS_LIGHT}
+                hoverStayTime={HOVER_STAY_MS}
+                onClick={() => {
+                  hapticLight();
+                  playAudioUrl(word.audioUsUrl, '美音');
+                }}
+              >
                 美音
               </Text>
             </View>
@@ -184,6 +349,8 @@ export function WordCard(props: WordCardProps): ReactElement {
               <View
                 key={`${segment.type}-${segment.form}-${idx}`}
                 className={`word-card__segment is-${segment.type}`}
+                hoverClass={segment.type === 'root' ? HOVER_PRESS : HOVER_PRESS_LIGHT}
+                hoverStayTime={HOVER_STAY_MS}
                 onClick={() => onSegmentTap(segment)}
               >
                 <Text className="word-card__segment-form">{segment.form}</Text>
@@ -198,7 +365,12 @@ export function WordCard(props: WordCardProps): ReactElement {
         <View className="word-card__back">
           <Text className="word-card__back-title">例句预览</Text>
           <Text className="word-card__back-sentence">{previewSentence ?? '今日例句在下方列表'}</Text>
-          <Text className="word-card__ghost-btn word-card__back-link" onClick={onOpenDetail}>
+          <Text
+            className="word-card__ghost-btn word-card__back-link"
+            hoverClass={HOVER_PRESS_LIGHT}
+            hoverStayTime={HOVER_STAY_MS}
+            onClick={onOpenDetail}
+          >
             查看单词详情
           </Text>
         </View>
@@ -206,7 +378,13 @@ export function WordCard(props: WordCardProps): ReactElement {
 
       <View className="word-card__actions">
         {gradeLabels.map((g) => (
-          <Text key={g.grade} className={`word-card__pill ${g.tone}`} onClick={() => onGrade(g.grade)}>
+          <Text
+            key={g.grade}
+            className={`word-card__pill ${g.tone} ${poppingGrade === g.grade ? 'is-popping' : ''}`}
+            hoverClass={HOVER_PRESS}
+            hoverStayTime={HOVER_STAY_MS}
+            onClick={() => commitGrade(g.grade)}
+          >
             {g.label}
           </Text>
         ))}
