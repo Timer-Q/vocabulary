@@ -244,6 +244,12 @@ select {
 }
 .word-line { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px 16px; }
 .phonetic { color: var(--muted); font-family: var(--mono); font-size: 0.95rem; display: flex; flex-wrap: wrap; gap: 12px; }
+.audio-btn {
+  align-self: center;
+  min-height: 28px;
+  padding: 0 8px;
+  font-size: 13px;
+}
 .bridge { max-width: 68ch; line-height: 1.65; color: var(--ink-soft); }
 .meta-row { display: flex; flex-wrap: wrap; gap: 8px 12px; color: var(--muted); font-size: 13px; }
 .meta-row a { color: var(--accent); text-decoration: none; }

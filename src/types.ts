@@ -10,6 +10,14 @@ export type Part = {
 export type Example = {
   en: string
   zh: string
+  source?: string
+  url?: string
+}
+
+export type WordAudio = {
+  url: string
+  license: string
+  attribution: string
 }
 
 export type Word = {
@@ -26,6 +34,7 @@ export type Word = {
   parts: Part[]
   morphemes: string[]
   examples: Example[]
+  audio: WordAudio | null
   note: string | null
   section: string | null
   hub: boolean

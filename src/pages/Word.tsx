@@ -7,7 +7,7 @@ import { loadWordBundle } from '../lib/data'
 import { groupsFromWord } from '../lib/graphModel'
 import { wordGraphPath } from '../lib/nav'
 import type { SectionChunk, Word } from '../types'
-import { levelLabel } from '../types'
+import { levelLabel, type WordAudio } from '../types'
 
 type Bundle = {
   word: Word
@@ -48,6 +48,27 @@ function useWordBundle(spelling: string): { bundle: Bundle | null; error: string
   return { bundle, error, loading }
 }
 
+export function AudioButton({ audio }: { audio: WordAudio | null | undefined }) {
+  if (!audio?.url) return null
+  const credit = [audio.attribution, audio.license].filter(Boolean).join(' · ')
+  return (
+    <button
+      type="button"
+      className="btn audio-btn"
+      aria-label="播放读音"
+      title={credit || '公开录音'}
+      onClick={(event) => {
+        event.stopPropagation()
+        event.preventDefault()
+        const player = new Audio(audio.url)
+        void player.play()
+      }}
+    >
+      读
+    </button>
+  )
+}
+
 export function PhoneticLine({ word }: { word: Pick<Word, 'phonetic' | 'phoneticUs'> }) {
   if (!word.phonetic && !word.phoneticUs) return null
   if (word.phonetic && word.phoneticUs) {
@@ -81,6 +102,7 @@ function WordAnalysis({
             {word.spelling}
           </h1>
           <PhoneticLine word={word} />
+          <AudioButton audio={word.audio} />
         </div>
         <p className="meaning">{word.gloss}</p>
         <div className="tag-row">

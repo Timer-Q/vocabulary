@@ -49,6 +49,27 @@ function isGenericMeaning(meaning) {
   return false
 }
 
+/** Handout mnemonics such as "-走" or "dis分开" are not glosses. */
+function isMnemonicJunk(meaning) {
+  const text = cleanText(meaning)
+  if (!text || isGenericMeaning(text)) return true
+  if (/^[-—－]/.test(text)) return true
+  if (/[A-Za-z]/.test(text)) return true
+  if (/[;；①②③]/.test(text)) return true
+  return false
+}
+
+const BLOCKED_MORPHEMES = new Set([
+  'prefix/abstr',
+  'prefix/air',
+  'prefix/aca',
+  'prefix/agg',
+  'prefix/airs',
+  'suffix/e',
+  'suffix/a',
+  'root/air',
+])
+
 function glossOf(word) {
   const parts = Array.isArray(word.pos) ? word.pos : []
   const senses = []
@@ -135,10 +156,11 @@ async function main() {
     load('lecture-word-notes.json'),
     load('lecture-sections.json'),
   ])
-  const [externalGlosses, externalMorphemes, externalExamples] = await Promise.all([
+  const [externalGlosses, externalMorphemes, externalExamples, externalAudio] = await Promise.all([
     loadOptional('external-glosses.json'),
     loadOptional('external-morphemes.json'),
     loadOptional('external-examples.json'),
+    loadOptional('external-audio.json'),
   ])
 
   const storyById = new Map()
@@ -266,6 +288,20 @@ async function main() {
   for (const note of lectureNotes) {
     const text = cleanText(note.etymology)
     if (text) notesBySpelling.set(note.spelling, text.slice(0, 220))
+  }
+
+  const audioBySpelling = new Map()
+  for (const row of externalAudio) {
+    const spelling = cleanText(row.spelling)
+    const url = cleanText(row.url)
+    const license = cleanText(row.license)
+    if (!spelling || !url || spelling === 'acervate') continue
+    if (audioBySpelling.has(spelling)) continue
+    audioBySpelling.set(spelling, {
+      url,
+      license,
+      attribution: cleanText(row.attribution),
+    })
   }
 
   const examplesBySpelling = new Map()
@@ -414,6 +450,7 @@ async function main() {
       parts,
       morphemes,
       examples: examplesBySpelling.get(spelling) || [],
+      audio: audioBySpelling.get(spelling) || null,
       note: notesBySpelling.get(spelling) || null,
       section,
       hub: section ? hubOf.get(section) === spelling : false,
@@ -428,17 +465,85 @@ async function main() {
     list.push(word.spelling)
     morphemeWords.set(id, list)
   }
+  const baseIds = new Set(morphemeWords.keys())
+
+  function bestVote(id) {
+    const bag = meaningVotes.get(id)
+    if (!bag) return ''
+    let best = ''
+    let bestCount = 0
+    for (const [meaning, count] of bag) {
+      if (isMnemonicJunk(meaning)) continue
+      if (count > bestCount || (count === bestCount && meaning.length > best.length)) {
+        best = meaning
+        bestCount = count
+      }
+    }
+    return best
+  }
+
+  function shallowGloss(text) {
+    return [...cleanText(text)].length <= 1
+  }
+
+  /** Gloss for a list row that is not one of the original link-table morphemes. */
+  function listGloss(id) {
+    if (BLOCKED_MORPHEMES.has(id)) return ''
+    const form = id.split('/')[1] || ''
+    if (!form) return ''
+    const vote = bestVote(id)
+    const wiki = externalById.get(id) || ''
+    const story = meaningFromStory(storyById.get(id))
+    const storyOk = story && !isMnemonicJunk(story) ? story : ''
+    if (vote && !shallowGloss(vote)) return vote
+    if (wiki) return wiki
+    if (storyOk) return storyOk
+    if (vote && form.length >= 4) return vote
+    return ''
+  }
+
+  const splitWords = new Map()
+  const splitDisplay = new Map()
+  for (const word of [...derivedWords, ...lectureWords]) {
+    for (const part of word.splitPattern || []) {
+      const type = part.type
+      if (type !== 'root' && type !== 'prefix' && type !== 'suffix' && type !== 'combining_form') continue
+      const form = part.rootForm || part.form
+      if (!normForm(form)) continue
+      const id = morphemeId(type, form)
+      const seen = splitWords.get(id) || new Set()
+      seen.add(word.spelling)
+      splitWords.set(id, seen)
+      const surface = cleanText(part.form || form)
+      const prev = splitDisplay.get(id)
+      if (surface && (!prev || surface.length > prev.length)) splitDisplay.set(id, surface)
+    }
+  }
+  for (const [id, spellings] of splitWords) {
+    const kind = id.split('/')[0]
+    if (kind !== 'root' && kind !== 'prefix' && kind !== 'suffix' && kind !== 'combining_form') continue
+    if (BLOCKED_MORPHEMES.has(id)) continue
+    if (!baseIds.has(id) && !listGloss(id)) continue
+    const list = morphemeWords.get(id) || []
+    const seen = new Set(list)
+    for (const spelling of spellings) {
+      if (seen.has(spelling)) continue
+      seen.add(spelling)
+      list.push(spelling)
+    }
+    morphemeWords.set(id, list)
+  }
 
   const kindOrder = { root: 0, prefix: 1, suffix: 2, combining_form: 3 }
   const morphemeMeta = []
   for (const [id, spellings] of morphemeWords) {
     const [kind, slug] = id.split('/')
-    const form = displayForm.get(id) || slug
+    const form = displayForm.get(id) || splitDisplay.get(id) || slug
     morphemeMeta.push({
       id,
       form,
       kind,
-      meaning: meaningOf(id) || externalById.get(id) || '',
+      meaning: baseIds.has(id) ? meaningOf(id) || externalById.get(id) || '' : listGloss(id),
       count: spellings.length,
     })
   }
@@ -454,6 +559,12 @@ async function main() {
 
   const catalog = []
   let exampleCount = 0
+  const countedExamples = new Set()
+  function countExamples(word) {
+    if (!word || countedExamples.has(word.spelling)) return
+    countedExamples.add(word.spelling)
+    exampleCount += word.examples.length
+  }
 
   for (const meta of morphemeMeta) {
     const spellings = morphemeWords.get(meta.id) || []
@@ -461,7 +572,7 @@ async function main() {
       .map((spelling) => buildWord(spelling))
       .filter(Boolean)
       .sort(compareWords)
-    for (const word of words) exampleCount += word.examples.length
+    for (const word of words) countExamples(word)
     const chunk = {
       id: meta.id,
       form: meta.form,
@@ -473,6 +584,7 @@ async function main() {
     const rel = `m/${meta.id}.json`
     await writeJson(path.join(outDir, rel), chunk)
     for (const word of words) {
+      if (primaryId(word.spelling) !== meta.id) continue
       catalog.push([word.spelling, word.gloss, `m/${meta.id}`, word.section || ''])
     }
   }
@@ -501,7 +613,7 @@ async function main() {
       if (derivedBySpelling.has(spelling)) continue
       const word = words.find((item) => item.spelling === spelling)
       if (!word) continue
-      exampleCount += word.examples.length
+      countExamples(word)
       catalog.push([word.spelling, word.gloss, `s/${section.sectionId}`, section.sectionId])
     }
   }
@@ -516,7 +628,7 @@ async function main() {
   if (orphans.length) {
     await writeJson(path.join(outDir, 'w/orphans.json'), { words: orphans })
     for (const word of orphans) {
-      exampleCount += word.examples.length
+      countExamples(word)
       catalog.push([word.spelling, word.gloss, 'w/orphans', ''])
     }
   }

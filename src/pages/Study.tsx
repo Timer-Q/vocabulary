@@ -6,6 +6,7 @@ import { loadMorpheme, loadOrphans, loadSection, studyWords, useIndex } from '..
 import { useDesk } from '../lib/desk'
 import { dueEntries, gradeCard, markRootDone, rememberRoot, useProgress } from '../lib/progress'
 import type { ReviewResult } from '../lib/sm2'
+import { AudioButton } from './Word'
 import { KIND_LABEL, type Word } from '../types'
 
 const grades: { id: ReviewResult; label: string; key: string }[] = [
@@ -300,7 +301,10 @@ export function StudyPage() {
         <span style={{ width: `${((index + (flipped ? 0.45 : 0.12)) / session.queue.length) * 100}%` }} />
       </div>
       <div className="study-sheet" onClick={() => { flippedRef.current = true; setFlipped(true) }}>
-        <p className="spell">{word.spelling}</p>
+        <div className="word-line">
+          <p className="spell">{word.spelling}</p>
+          <AudioButton audio={word.audio} />
+        </div>
         {word.phonetic ? (
           <p className="phonetic">
             {word.phoneticUs ? (

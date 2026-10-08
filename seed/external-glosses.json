@@ -1564,5 +1564,113 @@
     "source": "Wiktionary",
     "license": "CC BY-SA",
     "url": "https://en.wiktionary.org/wiki/ovo-"
+  },
+  {
+    "kind": "suffix",
+    "form": "ics",
+    "en": "Forms nouns referring to fields of knowledge or practice",
+    "zh": "构成表示学科或活动的名词",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/-ics"
+  },
+  {
+    "kind": "suffix",
+    "form": "ations",
+    "en": "plural of -ation",
+    "zh": "-ation 的复数",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/-ations"
+  },
+  {
+    "kind": "suffix",
+    "form": "ates",
+    "en": "third-person singular simple present indicative of -ate",
+    "zh": "-ate 的第三人称单数现在时",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/-ates"
+  },
+  {
+    "kind": "suffix",
+    "form": "ions",
+    "en": "plural of -ion",
+    "zh": "-ion 的复数",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/-ions"
+  },
+  {
+    "kind": "suffix",
+    "form": "ers",
+    "en": "Used to form slang or colloquial equivalents of words",
+    "zh": "构成俚语或口语词",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/-ers"
+  },
+  {
+    "kind": "suffix",
+    "form": "ating",
+    "en": "present participle and gerund of -ate",
+    "zh": "-ate 的现在分词和动名词",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/-ating"
+  },
+  {
+    "kind": "suffix",
+    "form": "ities",
+    "en": "plural of -ity",
+    "zh": "-ity 的复数",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/-ities"
+  },
+  {
+    "kind": "root",
+    "form": "aero",
+    "en": "air or aircraft",
+    "zh": "空气、航空器",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/aero-"
+  },
+  {
+    "kind": "suffix",
+    "form": "izing",
+    "en": "present participle and gerund of -ize",
+    "zh": "-ize 的现在分词和动名词",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/-izing"
+  },
+  {
+    "kind": "root",
+    "form": "auto",
+    "en": "Reflexive, regarding or to oneself",
+    "zh": "自己、自身",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/auto-"
+  },
+  {
+    "kind": "root",
+    "form": "actino",
+    "en": "ray; radial form",
+    "zh": "射线",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/actino-"
+  },
+  {
+    "kind": "prefix",
+    "form": "afro",
+    "en": "Found in Africa",
+    "zh": "见于非洲",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/afro-"
   }
 ]
