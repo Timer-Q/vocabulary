@@ -63,6 +63,15 @@ function meaningFromStory(story) {
   return matched ? matched[1] : ''
 }
 
+/** Short gloss only, from the fixed affix-story shapes. Not the long story, not 本义. */
+function affixStoryGloss(story) {
+  if (!story) return ''
+  const matched = story.match(/多表示「([^」]*)」/) || story.match(/常表达「([^」]*)」/)
+  if (!matched) return ''
+  const gloss = cleanText(matched[1])
+  return gloss && !isGenericMeaning(gloss) ? gloss : ''
+}
+
 function cleanPhon(value) {
   return cleanText(value)
     .replace(/^[\/\[]+|[\/\]]+$/g, '')
@@ -118,8 +127,43 @@ async function main() {
   ])
 
   const storyById = new Map()
+  const affixByForm = new Map()
   for (const story of stories) {
     storyById.set(morphemeId(story.kind, story.normalizedForm), story.story)
+    if (story.kind !== 'prefix' && story.kind !== 'suffix') continue
+    const gloss = affixStoryGloss(story.story)
+    const form = normForm(story.normalizedForm)
+    if (!gloss || !form || affixByForm.has(form)) continue
+    affixByForm.set(form, { kind: story.kind, gloss })
+  }
+
+  const fallbackSeen = new Set()
+  const fallbackGain = { prefix: 0, suffix: 0 }
+
+  function affixGlossForToken(type, form) {
+    if (type !== 'prefix' && type !== 'suffix') return ''
+    const norm = normForm(form)
+    if (!norm) return ''
+    const exact = affixByForm.get(norm)
+    if (exact && exact.kind === type) return exact.gloss
+    if (type === 'suffix' && norm.length > 1 && norm.endsWith('s')) {
+      const stem = norm.slice(0, -1)
+      const hit = affixByForm.get(stem)
+      if (hit && hit.kind === 'suffix') return hit.gloss
+    }
+    return ''
+  }
+
+  function withAffixFallback(spelling, type, form, meaning) {
+    if (meaning) return meaning
+    const gloss = affixGlossForToken(type, form)
+    if (!gloss) return ''
+    const key = `${spelling}|${type}|${normForm(form)}`
+    if (!fallbackSeen.has(key)) {
+      fallbackSeen.add(key)
+      fallbackGain[type] += 1
+    }
+    return gloss
   }
 
   const linksBySpelling = new Map()
@@ -213,11 +257,12 @@ async function main() {
       const form = displayForm.get(id) || part.form
       const voted = meaningOf(id)
       const own = cleanText(part.meaning)
+      const baseMeaning = voted || (isGenericMeaning(own) ? '' : own)
       parts.push({
         form,
         type,
         id,
-        meaning: voted || (isGenericMeaning(own) ? '' : own),
+        meaning: withAffixFallback(spelling, type, part.form, baseMeaning),
       })
     }
     if (parts.length === 0) {
@@ -225,11 +270,12 @@ async function main() {
         const id = morphemeId(link.morphemeKind, link.morphemeForm)
         if (seen.has(id)) continue
         seen.add(id)
+        const linkForm = link.displayForm || link.morphemeForm
         parts.push({
-          form: link.displayForm || link.morphemeForm,
+          form: linkForm,
           type: link.morphemeKind,
           id,
-          meaning: meaningOf(id),
+          meaning: withAffixFallback(spelling, link.morphemeKind, linkForm, meaningOf(id)),
         })
       }
     }
@@ -471,7 +517,7 @@ async function main() {
       .slice(0, 12)
       .map(([id, info]) => `${id}×${info.blank}`)
   }
-  console.log(JSON.stringify({ index: index.stats, files: sizes.files, bytes: sizes.bytes, affix, blankPrefix: blankIds('prefix'), blankSuffix: blankIds('suffix') }, null, 2))
+  console.log(JSON.stringify({ index: index.stats, files: sizes.files, bytes: sizes.bytes, affix, fallbackGain, blankPrefix: blankIds('prefix'), blankSuffix: blankIds('suffix') }, null, 2))
   if (index.stats.words < 8000 || index.stats.morphemes < 200) {
     throw new Error('seed build produced too little data')
   }
