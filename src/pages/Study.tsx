@@ -298,11 +298,23 @@ export function StudyPage() {
       </div>
       <div className="study-sheet" onClick={() => { flippedRef.current = true; setFlipped(true) }}>
         <p className="spell">{word.spelling}</p>
-        {word.phonetic ? <p className="phonetic">/{word.phonetic}/</p> : null}
+        {word.phonetic ? (
+          <p className="phonetic">
+            {word.phoneticUs ? (
+              <>
+                <span>英 /{word.phonetic}/</span>
+                <span>美 /{word.phoneticUs}/</span>
+              </>
+            ) : (
+              <>/{word.phonetic}/</>
+            )}
+          </p>
+        ) : null}
         <ComposingStick parts={word.parts} conceal={!flipped} />
         {flipped ? (
           <div className="reveal">
             <p className="gloss">{word.gloss}</p>
+            {word.bridge ? <p className="bridge">{word.bridge}</p> : null}
             {word.examples[0] ? (
               <p className="study-example">
                 {word.examples[0].en}

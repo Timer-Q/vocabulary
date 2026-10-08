@@ -244,6 +244,7 @@ export function RowList({
   label,
   idPrefix,
   onPick,
+  follow = true,
 }: {
   rows: DeskRow[]
   hi: number
@@ -251,13 +252,20 @@ export function RowList({
   label: string
   idPrefix: string
   onPick: (row: DeskRow, index: number) => void
+  /** When false the scroller stays mounted but must not be scrolled. */
+  follow?: boolean
 }) {
   const listRef = useRef<HTMLDivElement>(null)
+  const followRef = useRef(follow)
   const activeKey = rows[hi]?.key
   useEffect(() => {
+    const resumed = follow && !followRef.current
+    followRef.current = follow
+    // Resuming a parked list must not reapply a scroll position.
+    if (!follow || resumed) return
     const node = listRef.current?.querySelector<HTMLElement>(`[data-idx="${hi}"]`)
     node?.scrollIntoView({ block: 'nearest' })
-  }, [hi, activeKey])
+  }, [hi, activeKey, follow])
 
   return (
     <div

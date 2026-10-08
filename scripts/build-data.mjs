@@ -53,10 +53,27 @@ function meaningFromStory(story) {
   return matched ? matched[1] : ''
 }
 
-function phoneticOf(word) {
-  const raw = cleanText(word.phoneticUk || word.phoneticUs || '')
-  if (!raw) return ''
-  return raw.replace(/^\/+|\/+$/g, '')
+function cleanPhon(value) {
+  return cleanText(value)
+    .replace(/^[\/\[]+|[\/\]]+$/g, '')
+    .trim()
+}
+
+function phoneticsOf(word) {
+  if (!word) return { phonetic: '', phoneticUs: '' }
+  let uk = cleanPhon(word.phoneticUk || '')
+  let us = cleanPhon(word.phoneticUs || '')
+  if (uk && us && uk === us) us = ''
+  if (!uk && us) {
+    uk = us
+    us = ''
+  }
+  return { phonetic: uk, phoneticUs: us }
+}
+
+function bridgeOf(word) {
+  const text = cleanText(word?.bridge || '')
+  return text ? text.slice(0, 240) : null
 }
 
 function exampleScore(example) {
@@ -241,10 +258,13 @@ async function main() {
       seen.add(id)
       morphemes.push(id)
     }
+    const phon = phoneticsOf(lecture || derived)
     return {
       spelling,
-      phonetic: phoneticOf(base),
+      phonetic: phon.phonetic,
+      phoneticUs: phon.phoneticUs,
       gloss: glossOf(base),
+      bridge: bridgeOf(lecture) || bridgeOf(derived),
       levels: Array.isArray(base.level) ? base.level : [],
       frequency: Number(base.frequency) || 0,
       parts,

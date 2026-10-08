@@ -15,7 +15,9 @@ export type Example = {
 export type Word = {
   spelling: string
   phonetic: string
+  phoneticUs: string
   gloss: string
+  bridge: string | null
   levels: string[]
   frequency: number
   parts: Part[]

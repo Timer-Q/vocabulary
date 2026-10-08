@@ -18,8 +18,8 @@ export function App() {
     <BrowserRouter basename={basename()}>
       <Routes>
         <Route element={<Shell />}>
-          <Route index element={<HomePage />} />
           <Route element={<LexiconDesk />}>
+            <Route index element={<HomePage />} />
             <Route path="roots" element={<AwaitingSelection />} />
             <Route path="roots/:kind/:slug" element={<RootDetailPage />} />
             <Route path="roots/:kind/:slug/graph" element={<RootDetailPage />} />
@@ -27,10 +27,10 @@ export function App() {
             <Route path="sections/:id/graph" element={<SectionPage />} />
             <Route path="words/:spelling" element={<WordPage />} />
             <Route path="words/:spelling/graph" element={<WordPage />} />
+            <Route path="study" element={<StudyPage />} />
+            <Route path="me" element={<ProgressPage />} />
+            <Route path="*" element={<p className="empty-pane">没有这一页。</p>} />
           </Route>
-          <Route path="study" element={<StudyPage />} />
-          <Route path="me" element={<ProgressPage />} />
-          <Route path="*" element={<p className="empty-pane">没有这一页。</p>} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -72,8 +72,10 @@ export function WordPage() {
   return (
     <div className="detail">
       <header className="detail-head">
-        <h1 className="spell">{word.spelling}</h1>
-        {word.phonetic ? <p className="phonetic">/{word.phonetic}/</p> : null}
+        <div className="word-line">
+          <h1 className="spell">{word.spelling}</h1>
+          <Phonetic word={word} />
+        </div>
         <p className="meaning">{word.gloss}</p>
         <div className="meta-row">
           {word.levels.map((level) => (
@@ -87,6 +89,19 @@ export function WordPage() {
           ) : null}
         </div>
         <ComposingStick parts={word.parts} />
+        {word.bridge ? <p className="bridge">{word.bridge}</p> : null}
+        {word.examples.length > 0 ? (
+          <ul className="examples">
+            {word.examples.map((example) => (
+              <li key={example.en}>
+                <p>{example.en}</p>
+                {example.zh ? <span>{example.zh}</span> : null}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p className="quiet">讲义里没有这个词的例句。</p>
+        )}
       </header>
       <div className="detail-body">
         <div className="family">
@@ -96,18 +111,6 @@ export function WordPage() {
               <p className="prose">{word.note}</p>
             </section>
           ) : null}
-          <section>
-            <h2 className="group-label">例句</h2>
-            {word.examples.length === 0 ? <p className="quiet">讲义里没有可用例句。派生词库的例句是模板句，这里不拿来充数。</p> : null}
-            <ul className="examples">
-              {word.examples.map((example) => (
-                <li key={example.en}>
-                  <p>{example.en}</p>
-                  <span>{example.zh}</span>
-                </li>
-              ))}
-            </ul>
-          </section>
           {neighbors.length > 0 ? (
             <section>
               <h2 className="group-label">{family.length > 0 ? '同族' : '同组'}</h2>
@@ -133,4 +136,17 @@ export function WordPage() {
       </div>
     </div>
   )
+}
+
+function Phonetic({ word }: { word: { phonetic: string; phoneticUs: string } }) {
+  if (!word.phonetic && !word.phoneticUs) return null
+  if (word.phonetic && word.phoneticUs) {
+    return (
+      <p className="phonetic">
+        <span>英 /{word.phonetic}/</span>
+        <span>美 /{word.phoneticUs}/</span>
+      </p>
+    )
+  }
+  return <p className="phonetic">/{word.phonetic || word.phoneticUs}/</p>
 }
