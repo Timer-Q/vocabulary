@@ -9,49 +9,60 @@ export function ProgressPage() {
   const mastered = masteredCount(progress)
 
   return (
-    <div className="stack narrow">
-      <header className="page-intro">
-        <p className="eyebrow">进度</p>
-        <h1>只记在这台浏览器里</h1>
-        <p className="lede">没有账号。清站点数据会把复习进度一起清掉。</p>
+    <div className="settings">
+      <header className="detail-head">
+        <h1>进度</h1>
+        <p className="prose">只记在这台浏览器里。清站点数据会把复习进度一起清掉。</p>
       </header>
-      <ul className="stat-row">
-        <li><strong>{seen}</strong><span>学过</span></li>
-        <li><strong>{due}</strong><span>到期</span></li>
-        <li><strong>{mastered}</strong><span>较熟</span></li>
-        <li><strong>{progress.doneRoots.length}</strong><span>词根组</span></li>
-      </ul>
-      <section className="goal-card">
+      <dl className="ledger">
+        <div>
+          <dt>学过</dt>
+          <dd>{seen}</dd>
+        </div>
+        <div>
+          <dt>到期</dt>
+          <dd>{due}</dd>
+        </div>
+        <div>
+          <dt>较熟</dt>
+          <dd>{mastered}</dd>
+        </div>
+        <div>
+          <dt>词根组</dt>
+          <dd>{progress.doneRoots.length}</dd>
+        </div>
+      </dl>
+      <section className="goals">
         <h2>每天多少</h2>
         <div className="stepper">
           <span>新词</span>
-          <button type="button" onClick={() => setDailyGoals(progress.dailyNew - 1, progress.dailyReview)}>
+          <button type="button" onClick={() => setDailyGoals(progress.dailyNew - 1, progress.dailyReview)} aria-label="减少新词">
             −
           </button>
           <strong>{progress.dailyNew}</strong>
-          <button type="button" onClick={() => setDailyGoals(progress.dailyNew + 1, progress.dailyReview)}>
+          <button type="button" onClick={() => setDailyGoals(progress.dailyNew + 1, progress.dailyReview)} aria-label="增加新词">
             +
           </button>
         </div>
         <div className="stepper">
           <span>复习</span>
-          <button type="button" onClick={() => setDailyGoals(progress.dailyNew, progress.dailyReview - 5)}>
+          <button type="button" onClick={() => setDailyGoals(progress.dailyNew, progress.dailyReview - 5)} aria-label="减少复习">
             −
           </button>
           <strong>{progress.dailyReview}</strong>
-          <button type="button" onClick={() => setDailyGoals(progress.dailyNew, progress.dailyReview + 5)}>
+          <button type="button" onClick={() => setDailyGoals(progress.dailyNew, progress.dailyReview + 5)} aria-label="增加复习">
             +
           </button>
         </div>
       </section>
       {data ? (
-        <p className="muted">
+        <p className="quiet">
           词库里有 {data.stats.words} 个词、{data.stats.morphemes} 个词素。今天已新学 {progress.newToday}，复习 {progress.reviewedToday}。
         </p>
       ) : null}
       <button
         type="button"
-        className="button danger"
+        className="btn danger"
         onClick={() => {
           if (window.confirm('清除这台浏览器上的学习进度？')) resetProgress()
         }}

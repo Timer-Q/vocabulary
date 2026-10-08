@@ -1,4 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="8" fill="#007aff"/>
-  <text x="16" y="22" text-anchor="middle" font-family="Palatino, serif" font-size="16" fill="white">根</text>
+  <rect width="32" height="32" fill="#1c2430"/>
+  <rect x="6" y="8" width="11" height="12" fill="#f4f7fb"/>
+  <rect x="19" y="11" width="7" height="9" fill="none" stroke="#f4f7fb" stroke-width="1.4"/>
+  <path d="M5 24h22" stroke="#8fb4e0" stroke-width="1.6"/>
 </svg>

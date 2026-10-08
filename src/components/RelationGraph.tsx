@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
+import { samePath } from '../lib/desk'
 import type { GNode, GraphSpec } from '../lib/graphModel'
 
 type Placed = { node: GNode; x: number; y: number; tier: 'focus' | 'mid' | 'leaf' }
@@ -60,8 +61,7 @@ function placeGroups(spec: GraphSpec): { nodes: Placed[]; edges: DrawnEdge[] } {
     const kids = group.children
     const spread = Math.min(Math.PI * 0.85, 0.34 * Math.max(kids.length - 1, 1) + 0.2)
     kids.forEach((child, childIndex) => {
-      const childAngle =
-        kids.length === 1 ? angle : angle - spread / 2 + (childIndex / (kids.length - 1)) * spread
+      const childAngle = kids.length === 1 ? angle : angle - spread / 2 + (childIndex / (kids.length - 1)) * spread
       const placed: Placed = {
         node: child,
         x: via.x + Math.cos(childAngle) * 168,
@@ -82,13 +82,28 @@ function placeGroups(spec: GraphSpec): { nodes: Placed[]; edges: DrawnEdge[] } {
   return { nodes, edges }
 }
 
-export function RelationGraph({ spec, compact = false }: { spec: GraphSpec; compact?: boolean }) {
+export function RelationGraph({
+  spec,
+  hotId = null,
+  onHot,
+}: {
+  spec: GraphSpec
+  hotId?: string | null
+  onHot?: (id: string | null) => void
+}) {
   const layout = useMemo(() => (spec.mode === 'groups' ? placeGroups(spec) : placeStar(spec)), [spec])
   const [hover, setHover] = useState<string | null>(null)
+  const active = hotId ?? hover
   const [view, setView] = useState({ x: 0, y: 0, k: 1 })
   const frame = useRef<HTMLDivElement>(null)
   const markerId = useId().replace(/:/g, '')
   const navigate = useNavigate()
+  const location = useLocation()
+
+  function point(id: string | null) {
+    setHover(id)
+    onHot?.(id)
+  }
 
   useEffect(() => {
     const node = frame.current
@@ -103,19 +118,17 @@ export function RelationGraph({ spec, compact = false }: { spec: GraphSpec; comp
   }, [])
 
   useEffect(() => {
-    setView({ x: 0, y: 0, k: compact ? 0.92 : 1 })
-  }, [spec.focus.id, compact])
+    setView({ x: 0, y: 0, k: 1 })
+  }, [spec.focus.id])
 
   const drag = useRef<{ x: number; y: number; px: number; py: number } | null>(null)
+  const hovered = layout.nodes.find((item) => item.node.id === active)?.node
 
   return (
-    <section className={`graph-card ${compact ? 'is-compact' : ''}`}>
-      <header className="graph-card__head">
-        <div>
-          <p className="eyebrow">{spec.subtitle}</p>
-          <h2>{spec.title}</h2>
-        </div>
-        <div className="graph-card__tools">
+    <section className="graph-pane" aria-label="关系图">
+      <div className="graph-bar">
+        <p>{spec.note}</p>
+        <div className="graph-tools">
           <button type="button" onClick={() => setView((current) => ({ ...current, k: Math.min(2.2, current.k + 0.12) }))}>
             放大
           </button>
@@ -126,110 +139,93 @@ export function RelationGraph({ spec, compact = false }: { spec: GraphSpec; comp
             复位
           </button>
         </div>
-      </header>
-      <div className="graph-layout">
-        <div
-          className="graph-frame"
-          ref={frame}
-          onPointerDown={(event) => {
-            if ((event.target as HTMLElement).closest('a')) return
-            drag.current = { x: event.clientX, y: event.clientY, px: view.x, py: view.y }
-            event.currentTarget.setPointerCapture(event.pointerId)
-          }}
-          onPointerMove={(event) => {
-            if (!drag.current) return
-            setView((current) => ({
-              ...current,
-              x: drag.current!.px + event.clientX - drag.current!.x,
-              y: drag.current!.py + event.clientY - drag.current!.y,
-            }))
-          }}
-          onPointerUp={() => {
-            drag.current = null
-          }}
-        >
-          <svg
-            viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
-            className="graph-svg"
-            style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.k})` }}
-            role="img"
-            aria-label={`${spec.title} 的关系图`}
-          >
-            <defs>
-              <marker id={markerId} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                <path d="M 0 1.2 L 8 5 L 0 8.8 z" className="graph-arrow" />
-              </marker>
-            </defs>
-            {layout.edges.map((edge, index) => (
-              <line
-                key={`${edge.x1}-${edge.y1}-${index}`}
-                x1={edge.x1}
-                y1={edge.y1}
-                x2={edge.x2}
-                y2={edge.y2}
-                className={edge.dashed ? 'graph-edge is-dashed' : 'graph-edge'}
-                markerEnd={`url(#${markerId})`}
-              />
-            ))}
-            {layout.nodes.map((placed) => {
-              const { w, h } = boxSize(placed.node.label, placed.tier)
-              const active = hover === placed.node.id
-              return (
-                <g
-                  key={placed.node.id}
-                  className={`graph-node tone-${placed.node.tone} tier-${placed.tier} ${active ? 'is-hot' : ''}`}
-                  onMouseEnter={() => setHover(placed.node.id)}
-                  onMouseLeave={() => setHover((current) => (current === placed.node.id ? null : current))}
-                  onFocus={() => setHover(placed.node.id)}
-                  onClick={() => navigate(placed.node.to)}
-                  onKeyDown={(event) => {
-                    if (event.key === 'Enter') navigate(placed.node.to)
-                  }}
-                  role="link"
-                  tabIndex={0}
-                >
-                  <rect x={placed.x - w / 2} y={placed.y - h / 2} width={w} height={h} rx={h / 2} />
-                  <text x={placed.x} y={placed.y - (placed.node.hint && placed.tier !== 'leaf' ? 8 : 0)} textAnchor="middle" dominantBaseline="middle">
-                    {placed.node.label}
-                  </text>
-                  {placed.tier !== 'leaf' && placed.node.hint ? (
-                    <text x={placed.x} y={placed.y + 14} textAnchor="middle" dominantBaseline="middle" className="graph-hint">
-                      {placed.node.hint.slice(0, 14)}
-                    </text>
-                  ) : null}
-                </g>
-              )
-            })}
-          </svg>
-          {hover ? (
-            <p className="graph-float">
-              {layout.nodes.find((item) => item.node.id === hover)?.node.label}
-              <span>{layout.nodes.find((item) => item.node.id === hover)?.node.hint}</span>
-            </p>
-          ) : null}
-        </div>
-        <aside className="graph-list">
-          <h3>{spec.listTitle}</h3>
-          <ul>
-            {spec.list.map((item) => (
-              <li key={item.id}>
-                <Link to={item.to} onMouseEnter={() => setHover(`w:${item.id}`)} onMouseLeave={() => setHover(null)}>
-                  <strong>{item.label}</strong>
-                  <span>{item.hint}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </aside>
       </div>
-      {spec.note ? <p className="graph-note">{spec.note}</p> : null}
-      <ul className="graph-legend">
-        <li><i className="swatch tone-root" />词根</li>
-        <li><i className="swatch tone-prefix" />前缀</li>
-        <li><i className="swatch tone-suffix" />后缀</li>
-        <li><i className="swatch tone-hub" />讲义中心</li>
-        <li><i className="swatch tone-word" />单词</li>
-      </ul>
+      <div
+        className="graph-frame"
+        ref={frame}
+        onPointerDown={(event) => {
+          if ((event.target as HTMLElement).closest('.graph-node')) return
+          drag.current = { x: event.clientX, y: event.clientY, px: view.x, py: view.y }
+          event.currentTarget.setPointerCapture(event.pointerId)
+        }}
+        onPointerMove={(event) => {
+          if (!drag.current) return
+          setView((current) => ({
+            ...current,
+            x: drag.current!.px + event.clientX - drag.current!.x,
+            y: drag.current!.py + event.clientY - drag.current!.y,
+          }))
+        }}
+        onPointerUp={() => {
+          drag.current = null
+        }}
+      >
+        <svg
+          viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
+          className="graph-svg"
+          style={{ transform: `translate(${view.x}px, ${view.y}px) scale(${view.k})` }}
+          role="img"
+          aria-label={`${spec.title} 的关系图`}
+        >
+          <defs>
+            <marker id={markerId} viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1.2 L 8 5 L 0 8.8 z" className="graph-arrow" />
+            </marker>
+          </defs>
+          {layout.edges.map((edge, index) => (
+            <line
+              key={`${edge.x1}-${edge.y1}-${index}`}
+              x1={edge.x1}
+              y1={edge.y1}
+              x2={edge.x2}
+              y2={edge.y2}
+              className={edge.dashed ? 'graph-edge is-dashed' : 'graph-edge'}
+              markerEnd={`url(#${markerId})`}
+            />
+          ))}
+          {layout.nodes.map((placed) => {
+            const { w, h } = boxSize(placed.node.label, placed.tier)
+            const hot = active === placed.node.id
+            const on = samePath(location.pathname, placed.node.to)
+            return (
+              <g
+                key={placed.node.id}
+                className={`graph-node tone-${placed.node.tone} tier-${placed.tier}${hot ? ' is-hot' : ''}${on ? ' is-on' : ''}`}
+                onMouseEnter={() => point(placed.node.id)}
+                onMouseLeave={() => point(null)}
+                onFocus={() => point(placed.node.id)}
+                onBlur={() => point(null)}
+                onClick={() => navigate({ pathname: placed.node.to, search: location.search })}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') {
+                    event.preventDefault()
+                    event.stopPropagation()
+                    navigate({ pathname: placed.node.to, search: location.search })
+                  }
+                }}
+                role="link"
+                tabIndex={0}
+              >
+                <rect x={placed.x - w / 2} y={placed.y - h / 2} width={w} height={h} rx={2} />
+                <text x={placed.x} y={placed.y - (placed.node.hint && placed.tier !== 'leaf' ? 8 : 0)} textAnchor="middle" dominantBaseline="middle">
+                  {placed.node.label}
+                </text>
+                {placed.tier !== 'leaf' && placed.node.hint ? (
+                  <text x={placed.x} y={placed.y + 14} textAnchor="middle" dominantBaseline="middle" className="graph-hint">
+                    {placed.node.hint.slice(0, 14)}
+                  </text>
+                ) : null}
+              </g>
+            )
+          })}
+        </svg>
+        {hovered ? (
+          <p className="graph-float">
+            {hovered.label}
+            <span>{hovered.hint}</span>
+          </p>
+        ) : null}
+      </div>
     </section>
   )
 }

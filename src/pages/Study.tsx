@@ -1,15 +1,17 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { ComposingStick } from '../components/ComposingStick'
 import { loadMorpheme, loadOrphans, loadSection, studyWords, useIndex } from '../lib/data'
+import { useDesk } from '../lib/desk'
 import { dueEntries, gradeCard, markRootDone, rememberRoot, useProgress } from '../lib/progress'
 import type { ReviewResult } from '../lib/sm2'
 import { KIND_LABEL, type Word } from '../types'
 
-const grades: { id: ReviewResult; label: string; tone: 'bad' | 'warn' | 'ok' | 'great' }[] = [
-  { id: 'unknown', label: '不认识', tone: 'bad' },
-  { id: 'vague', label: '模糊', tone: 'warn' },
-  { id: 'known', label: '认识', tone: 'ok' },
-  { id: 'mastered', label: '掌握', tone: 'great' },
+const grades: { id: ReviewResult; label: string; key: string }[] = [
+  { id: 'unknown', label: '不认识', key: '1' },
+  { id: 'vague', label: '模糊', key: '2' },
+  { id: 'known', label: '认识', key: '3' },
+  { id: 'mastered', label: '掌握', key: '4' },
 ]
 
 type QueueItem = { word: Word; chunk: string }
@@ -22,6 +24,12 @@ type Session = {
   finishedAllNew: boolean
 }
 
+function isField(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false
+  const tag = target.tagName
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target.isContentEditable
+}
+
 export function StudyPage() {
   const [params] = useSearchParams()
   const morphemeId = params.get('m')
@@ -29,21 +37,26 @@ export function StudyPage() {
   const mode = params.get('mode')
   const progress = useProgress()
   const { data } = useIndex()
+  const desk = useDesk()
   const [session, setSession] = useState<Session | null>(null)
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [index, setIndex] = useState(0)
   const [flipped, setFlipped] = useState(false)
-  const [flash, setFlash] = useState<'ok' | 'bad' | null>(null)
+  const [mark, setMark] = useState<ReviewResult | null>(null)
   const [done, setDone] = useState(false)
   const [reload, setReload] = useState(0)
   const shownAt = useRef(Date.now())
+  const flippedRef = useRef(false)
+  const markRef = useRef<ReviewResult | null>(null)
 
   useEffect(() => {
     let live = true
     setDone(false)
     setIndex(0)
     setFlipped(false)
+    flippedRef.current = false
+    setMark(null)
     setSession(null)
     setError('')
     if (!morphemeId && !sectionId && mode !== 'review') return
@@ -87,7 +100,7 @@ export function StudyPage() {
         const queue = fresh.slice(0, progress.dailyNew).map((item) => ({ word: item, chunk: chunkId }))
         if (!live) return
         setSession({
-          title: `${chunk.form} · ${KIND_LABEL[chunk.kind]}`,
+          title: `${chunk.form} ${KIND_LABEL[chunk.kind]}`,
           bucket: 'new',
           rootId: chunk.kind === 'root' ? chunk.id : null,
           queue,
@@ -128,38 +141,46 @@ export function StudyPage() {
   useEffect(() => {
     shownAt.current = Date.now()
     setFlipped(false)
+    flippedRef.current = false
+    setMark(null)
+    markRef.current = null
   }, [word?.spelling])
 
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (!word || done) return
-      if (event.key === ' ' || event.key === 'Enter') {
-        event.preventDefault()
-        setFlipped(true)
-      }
-      const map: Record<string, ReviewResult> = { '1': 'unknown', '2': 'vague', '3': 'known', '4': 'mastered' }
-      const result = map[event.key]
-      if (result && flipped) grade(result)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  })
-
   function grade(result: ReviewResult) {
-    if (!session || !card || flash) return
-    const good = result === 'known' || result === 'mastered'
-    setFlash(good ? 'ok' : 'bad')
+    if (!session || !card || markRef.current) return
+    if (!flippedRef.current) return
+    markRef.current = result
+    setMark(result)
     gradeCard(card.word.spelling, card.chunk, result, Date.now() - shownAt.current, session.bucket)
     window.setTimeout(() => {
-      setFlash(null)
+      markRef.current = null
+      setMark(null)
       if (index + 1 >= session.queue.length) {
         if (session.rootId && session.finishedAllNew) markRootDone(session.rootId)
         setDone(true)
       } else {
         setIndex((current) => current + 1)
       }
-    }, 280)
+    }, 160)
   }
+
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (!word || done || desk.query.trim()) return
+      if (event.isComposing || isField(event.target)) return
+      if (event.key === ' ' || event.key === 'Enter') {
+        if ((event.target as HTMLElement | null)?.closest('.grade, a, .btn')) return
+        event.preventDefault()
+        flippedRef.current = true
+        setFlipped(true)
+      }
+      const map: Record<string, ReviewResult> = { '1': 'unknown', '2': 'vague', '3': 'known', '4': 'mastered' }
+      const result = map[event.key]
+      if (result && flippedRef.current) grade(result)
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  })
 
   const nextRoot = useMemo(() => {
     const roots = data?.morphemes.filter((item) => item.kind === 'root') ?? []
@@ -170,17 +191,18 @@ export function StudyPage() {
     const roots = data?.morphemes.filter((item) => item.kind === 'root') ?? []
     const upcoming = roots.find((item) => !progress.doneRoots.includes(item.id)) || roots[0]
     return (
-      <div className="stack">
-        <header className="page-intro">
-          <p className="eyebrow">学习</p>
-          <h1>一次只学一组</h1>
-          <p className="lede">新词按词根成组出现。到期的词会按记忆曲线回来。</p>
+      <div className="study-stage">
+        <header className="detail-head">
+          <h1>一次学一组</h1>
+          <p className="prose">新词按词根成组出现。到期的词会按记忆曲线回来。</p>
         </header>
-        <div className="choice-grid">
+        <div className="choice-row">
           {upcoming ? (
-            <Link className="choice primary" to={`/study?m=${encodeURIComponent(upcoming.id)}`}>
+            <Link className="choice" to={`/study?m=${encodeURIComponent(upcoming.id)}`}>
               <strong>学 {upcoming.form}</strong>
-              <span>{upcoming.meaning} · {upcoming.count} 词</span>
+              <span>
+                {upcoming.meaning}，{upcoming.count} 词
+              </span>
             </Link>
           ) : null}
           <Link className="choice" to="/study?mode=review">
@@ -196,23 +218,23 @@ export function StudyPage() {
     )
   }
 
-  if (error) return <p className="empty">{error}</p>
-  if (loading || !session) return <div className="skeleton list-skeleton" />
+  if (error) return <p className="empty-pane">{error}</p>
+  if (loading || !session) return <p className="empty-pane">正在准备这一组</p>
 
   if (session.queue.length === 0) {
     return (
-      <div className="stack">
-        <header className="page-intro">
-          <p className="eyebrow">{session.title}</p>
+      <div className="study-stage">
+        <header className="detail-head">
+          <p className="quiet">{session.title}</p>
           <h1>{mode === 'review' ? '现在没有到期的词' : '这组已经见过'}</h1>
-          <p className="lede">{mode === 'review' ? '去学一个新词根，或者等复习时间到。' : '可以换下一个词根，或打开关系图再看一遍结构。'}</p>
-          <div className="hero__actions">
+          <p className="prose">{mode === 'review' ? '去学一个新词根，或者等复习时间到。' : '可以换下一个词根，或回到词族再看一遍结构。'}</p>
+          <div className="actions">
             {nextRoot ? (
-              <Link className="button primary" to={`/study?m=${encodeURIComponent(nextRoot.id)}`}>
+              <Link className="btn primary" to={`/study?m=${encodeURIComponent(nextRoot.id)}`}>
                 下一个 {nextRoot.form}
               </Link>
             ) : null}
-            <Link className="button" to="/roots">
+            <Link className="btn" to="/roots">
               回词库
             </Link>
           </div>
@@ -223,33 +245,38 @@ export function StudyPage() {
 
   if (done) {
     return (
-      <div className="stack done-panel">
-        <div className="burst" aria-hidden>
-          <span />
-          <span />
-          <span />
-        </div>
-        <p className="eyebrow">本组完成</p>
-        <h1>记下了 {session.queue.length} 个</h1>
-        <p className="lede">不认识的词大约 10 分钟后会回到复习队列。</p>
-        <div className="hero__actions">
-          {session.rootId && !session.finishedAllNew ? (
-            <button type="button" className="button primary" onClick={() => { setDone(false); setIndex(0); setReload((current) => current + 1) }}>
-              继续这一组
-            </button>
-          ) : nextRoot ? (
-            <Link className="button primary" to={`/study?m=${encodeURIComponent(nextRoot.id)}`}>
-              再来一组 {nextRoot.form}
+      <div className="study-stage">
+        <header className="detail-head">
+          <p className="quiet">本组完成</p>
+          <h1>记下了 {session.queue.length} 个</h1>
+          <p className="prose">不认识和模糊的词大约 10 分钟后会回到复习队列。</p>
+          <div className="actions">
+            {session.rootId && !session.finishedAllNew ? (
+              <button
+                type="button"
+                className="btn primary"
+                onClick={() => {
+                  setDone(false)
+                  setIndex(0)
+                  setReload((current) => current + 1)
+                }}
+              >
+                继续这一组
+              </button>
+            ) : nextRoot ? (
+              <Link className="btn primary" to={`/study?m=${encodeURIComponent(nextRoot.id)}`}>
+                再来一组 {nextRoot.form}
+              </Link>
+            ) : (
+              <Link className="btn primary" to="/study?mode=review">
+                去复习
+              </Link>
+            )}
+            <Link className="btn" to="/">
+              回今天
             </Link>
-          ) : (
-            <Link className="button primary" to="/study?mode=review">
-              去复习
-            </Link>
-          )}
-          <Link className="button" to="/">
-            回今天
-          </Link>
-        </div>
+          </div>
+        </header>
       </div>
     )
   }
@@ -258,63 +285,45 @@ export function StudyPage() {
   const step = `${index + 1} / ${session.queue.length}`
 
   return (
-    <div className="stack study">
-      {flash ? <div className={`flash ${flash}`} /> : null}
-      <header className="study__top">
+    <div className={`study-stage${mark ? ` mark-${mark}` : ''}`}>
+      <header className="study-top">
         <div>
-          <p className="eyebrow">{session.title}</p>
+          <p className="quiet">{session.title}</p>
           <h1>{session.bucket === 'review' ? '复习' : '新词'}</h1>
         </div>
         <strong className="step">{step}</strong>
       </header>
-      <div className="meter" aria-hidden>
-        <span style={{ width: `${((index + (flipped ? 0.45 : 0.15)) / session.queue.length) * 100}%` }} />
+      <div className="meter" aria-hidden="true">
+        <span style={{ width: `${((index + (flipped ? 0.45 : 0.12)) / session.queue.length) * 100}%` }} />
       </div>
-      <button type="button" className={`study-card ${flipped ? 'is-flipped' : ''}`} onClick={() => setFlipped(true)}>
-        <span className="study-card__face front">
-          <em className="display">{word.spelling}</em>
-          {word.phonetic ? <span className="phonetic">/{word.phonetic}/</span> : null}
-          <span className="split-row static">
-            {word.parts.length ? (
-              word.parts.map((part) => (
-                <span key={part.id} className={`split-chip tone-${part.type}`}>
-                  <small>{KIND_LABEL[part.type]}</small>
-                  <strong>{part.form}</strong>
-                </span>
-              ))
-            ) : (
-              <span className="muted">没有拆分，翻开看释义</span>
-            )}
-          </span>
-          <span className="flip-hint">{flipped ? '' : '点击翻开 · 空格'}</span>
-        </span>
-        <span className="study-card__face back">
-          <strong className="gloss">{word.gloss}</strong>
-          <span className="split-row static">
-            {word.parts.map((part) => (
-              <span key={part.id} className={`split-chip tone-${part.type}`}>
-                <strong>{part.form}</strong>
-                <span>{part.meaning}</span>
-              </span>
-            ))}
-          </span>
-          {word.examples[0] ? (
-            <span className="study-example">
-              {word.examples[0].en}
-              <small>{word.examples[0].zh}</small>
-            </span>
-          ) : null}
-        </span>
-      </button>
-      <div className={`grade-bar ${flipped ? 'is-ready' : ''}`}>
+      <div className="study-sheet" onClick={() => { flippedRef.current = true; setFlipped(true) }}>
+        <p className="spell">{word.spelling}</p>
+        {word.phonetic ? <p className="phonetic">/{word.phonetic}/</p> : null}
+        <ComposingStick parts={word.parts} conceal={!flipped} />
+        {flipped ? (
+          <div className="reveal">
+            <p className="gloss">{word.gloss}</p>
+            {word.examples[0] ? (
+              <p className="study-example">
+                {word.examples[0].en}
+                <span>{word.examples[0].zh}</span>
+              </p>
+            ) : null}
+          </div>
+        ) : (
+          <p className="hint">空格翻开</p>
+        )}
+      </div>
+      <div className={`grade-dock${flipped ? ' is-ready' : ''}`}>
         {grades.map((gradeItem) => (
           <button
             key={gradeItem.id}
             type="button"
-            className={`grade tone-${gradeItem.tone}`}
-            disabled={!flipped || Boolean(flash)}
+            className={`grade grade-${gradeItem.id}${mark === gradeItem.id ? ' is-flash' : ''}`}
+            disabled={!flipped || Boolean(mark)}
             onClick={() => grade(gradeItem.id)}
           >
+            <kbd>{gradeItem.key}</kbd>
             {gradeItem.label}
           </button>
         ))}

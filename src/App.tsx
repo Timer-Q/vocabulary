@@ -1,9 +1,9 @@
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import { AwaitingSelection, LexiconDesk } from './components/LexiconDesk'
 import { Shell } from './components/Shell'
 import { HomePage } from './pages/Home'
 import { ProgressPage } from './pages/Progress'
 import { RootDetailPage } from './pages/RootDetail'
-import { RootsPage } from './pages/Roots'
 import { SectionPage } from './pages/Section'
 import { StudyPage } from './pages/Study'
 import { WordPage } from './pages/Word'
@@ -19,16 +19,18 @@ export function App() {
       <Routes>
         <Route element={<Shell />}>
           <Route index element={<HomePage />} />
-          <Route path="roots" element={<RootsPage />} />
-          <Route path="roots/:kind/:slug" element={<RootDetailPage />} />
-          <Route path="roots/:kind/:slug/graph" element={<RootDetailPage graph />} />
-          <Route path="sections/:id" element={<SectionPage />} />
-          <Route path="sections/:id/graph" element={<SectionPage graph />} />
-          <Route path="words/:spelling" element={<WordPage />} />
-          <Route path="words/:spelling/graph" element={<WordPage graph />} />
+          <Route element={<LexiconDesk />}>
+            <Route path="roots" element={<AwaitingSelection />} />
+            <Route path="roots/:kind/:slug" element={<RootDetailPage />} />
+            <Route path="roots/:kind/:slug/graph" element={<RootDetailPage />} />
+            <Route path="sections/:id" element={<SectionPage />} />
+            <Route path="sections/:id/graph" element={<SectionPage />} />
+            <Route path="words/:spelling" element={<WordPage />} />
+            <Route path="words/:spelling/graph" element={<WordPage />} />
+          </Route>
           <Route path="study" element={<StudyPage />} />
           <Route path="me" element={<ProgressPage />} />
-          <Route path="*" element={<p className="empty">没有这一页。</p>} />
+          <Route path="*" element={<p className="empty-pane">没有这一页。</p>} />
         </Route>
       </Routes>
     </BrowserRouter>
