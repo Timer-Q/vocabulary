@@ -12,6 +12,15 @@ function load(name) {
   return readFile(path.join(seedDir, name), 'utf8').then((text) => JSON.parse(text))
 }
 
+async function loadOptional(name) {
+  try {
+    return await load(name)
+  } catch (error) {
+    if (error && error.code === 'ENOENT') return []
+    throw error
+  }
+}
+
 function normForm(form) {
   return String(form || '')
     .toLowerCase()
@@ -36,6 +45,7 @@ function isGenericMeaning(meaning) {
   if (GENERIC.has(text)) return true
   if (/^(前缀|后缀|词根|词干)/.test(text)) return true
   if (/^(名词|动词|形容词|副词)?(前缀|后缀)$/.test(text)) return true
+  if (text.includes('-=')) return true
   return false
 }
 
@@ -125,6 +135,11 @@ async function main() {
     load('lecture-word-notes.json'),
     load('lecture-sections.json'),
   ])
+  const [externalGlosses, externalMorphemes, externalExamples] = await Promise.all([
+    loadOptional('external-glosses.json'),
+    loadOptional('external-morphemes.json'),
+    loadOptional('external-examples.json'),
+  ])
 
   const storyById = new Map()
   const affixByForm = new Map()
@@ -135,6 +150,35 @@ async function main() {
     const form = normForm(story.normalizedForm)
     if (!gloss || !form || affixByForm.has(form)) continue
     affixByForm.set(form, { kind: story.kind, gloss })
+  }
+
+  const externalById = new Map()
+  for (const row of [...externalGlosses, ...externalMorphemes]) {
+    const kind = row.kind
+    const form = normForm(row.normalizedForm || row.form)
+    const gloss = cleanText(row.zh || '')
+    if (!kind || !form || !gloss || isGenericMeaning(gloss)) continue
+    const id = `${kind}/${form}`
+    if (externalById.has(id)) continue
+    const storyGloss = meaningFromStory(storyById.get(id))
+    if (storyGloss && !isGenericMeaning(storyGloss)) continue
+    if (kind === 'prefix' || kind === 'suffix') {
+      const storyAffix = affixByForm.get(form)
+      if (storyAffix && storyAffix.kind === kind) continue
+    }
+    externalById.set(id, gloss)
+  }
+
+  function externalGlossForToken(type, form) {
+    const norm = normForm(form)
+    if (!norm) return ''
+    if (type !== 'prefix' && type !== 'suffix' && type !== 'root' && type !== 'combining_form') return ''
+    const exact = externalById.get(`${type}/${norm}`)
+    if (exact) return exact
+    if (type === 'suffix' && norm.length > 1 && norm.endsWith('s')) {
+      return externalById.get(`suffix/${norm.slice(0, -1)}`) || ''
+    }
+    return ''
   }
 
   const fallbackSeen = new Set()
@@ -207,7 +251,8 @@ async function main() {
     }
     if (best) return best
     const fromStory = meaningFromStory(storyById.get(id))
-    return fromStory && !isGenericMeaning(fromStory) ? fromStory : ''
+    if (fromStory && !isGenericMeaning(fromStory)) return fromStory
+    return ''
   }
 
   const sectionBySpelling = new Map()
@@ -241,6 +286,31 @@ async function main() {
       list.slice(0, 2).map(({ en, zh }) => ({ en, zh })),
     )
   }
+  const externalExampleBag = new Map()
+  for (const example of externalExamples) {
+    const spelling = cleanText(example.spelling)
+    if (!spelling || examplesBySpelling.has(spelling)) continue
+    if (exampleScore(example) < 2) continue
+    const en = cleanText(example.sentence)
+    const zh = cleanText(example.translation)
+    if (!en || !zh || en.length > 180) continue
+    const list = externalExampleBag.get(spelling) || []
+    list.push({
+      en: en.slice(0, 220),
+      zh: zh.slice(0, 220),
+      source: cleanText(example.source) || 'Tatoeba',
+      url: cleanText(example.url),
+      score: exampleScore(example),
+    })
+    externalExampleBag.set(spelling, list)
+  }
+  for (const [spelling, list] of externalExampleBag) {
+    list.sort((a, b) => b.score - a.score || a.en.length - b.en.length)
+    examplesBySpelling.set(
+      spelling,
+      list.slice(0, 2).map(({ en, zh, source, url }) => ({ en, zh, source, url })),
+    )
+  }
 
   function partsOf(spelling) {
     const derived = derivedBySpelling.get(spelling)
@@ -257,7 +327,9 @@ async function main() {
       const form = displayForm.get(id) || part.form
       const voted = meaningOf(id)
       const own = cleanText(part.meaning)
-      const baseMeaning = voted || (isGenericMeaning(own) ? '' : own)
+      const ownOk = isGenericMeaning(own) ? '' : own
+      const external = ownOk ? '' : externalGlossForToken(type, part.form)
+      const baseMeaning = ownOk ? voted || ownOk : voted || external
       parts.push({
         form,
         type,
@@ -275,7 +347,12 @@ async function main() {
           form: linkForm,
           type: link.morphemeKind,
           id,
-          meaning: withAffixFallback(spelling, link.morphemeKind, linkForm, meaningOf(id)),
+          meaning: withAffixFallback(
+            spelling,
+            link.morphemeKind,
+            linkForm,
+            meaningOf(id) || externalGlossForToken(link.morphemeKind, linkForm),
+          ),
         })
       }
     }
@@ -361,7 +438,7 @@ async function main() {
       id,
       form,
       kind,
-      meaning: meaningOf(id),
+      meaning: meaningOf(id) || externalById.get(id) || '',
       count: spellings.length,
     })
   }

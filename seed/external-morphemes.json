@@ -1,0 +1,362 @@
+[
+  {
+    "kind": "prefix",
+    "form": "con",
+    "en": "together; to unite",
+    "zh": "共同、一起",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/con-"
+  },
+  {
+    "kind": "prefix",
+    "form": "com",
+    "en": "the form of con- used before b, m, and p",
+    "zh": "b、m、p 前的 con-",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/com-"
+  },
+  {
+    "kind": "prefix",
+    "form": "cor",
+    "en": "the form of con- before r",
+    "zh": "r 前的 con-",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/cor-"
+  },
+  {
+    "kind": "prefix",
+    "form": "im",
+    "en": "not",
+    "zh": "不",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/im-"
+  },
+  {
+    "kind": "prefix",
+    "form": "an",
+    "en": "not; opposite in sense",
+    "zh": "不、非",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/an-"
+  },
+  {
+    "kind": "prefix",
+    "form": "ana",
+    "en": "up, above, upward",
+    "zh": "上、向上",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/ana-"
+  },
+  {
+    "kind": "prefix",
+    "form": "apo",
+    "en": "lacking, without, scant",
+    "zh": "缺乏、没有",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/apo-"
+  },
+  {
+    "kind": "prefix",
+    "form": "dia",
+    "en": "through, across",
+    "zh": "穿过",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/dia-"
+  },
+  {
+    "kind": "prefix",
+    "form": "di",
+    "en": "two",
+    "zh": "二",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/di-"
+  },
+  {
+    "kind": "prefix",
+    "form": "epi",
+    "en": "above in location or position",
+    "zh": "在上方",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/epi-"
+  },
+  {
+    "kind": "prefix",
+    "form": "ambi",
+    "en": "either or both",
+    "zh": "两者",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/ambi-"
+  },
+  {
+    "kind": "prefix",
+    "form": "amphi",
+    "en": "both",
+    "zh": "双方",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/amphi-"
+  },
+  {
+    "kind": "prefix",
+    "form": "aero",
+    "en": "air or aircraft",
+    "zh": "空气、航空器",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/aero-"
+  },
+  {
+    "kind": "prefix",
+    "form": "bio",
+    "en": "life",
+    "zh": "生命",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/bio-"
+  },
+  {
+    "kind": "prefix",
+    "form": "astro",
+    "en": "stars, space, or astronomy",
+    "zh": "星体、太空",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/astro-"
+  },
+  {
+    "kind": "prefix",
+    "form": "demo",
+    "en": "people",
+    "zh": "人民",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/demo-"
+  },
+  {
+    "kind": "prefix",
+    "form": "anthropo",
+    "en": "men or people",
+    "zh": "人",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/anthropo-"
+  },
+  {
+    "kind": "prefix",
+    "form": "aqua",
+    "en": "water",
+    "zh": "水",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/aqua-"
+  },
+  {
+    "kind": "prefix",
+    "form": "acro",
+    "en": "sharp",
+    "zh": "尖",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/acro-"
+  },
+  {
+    "kind": "prefix",
+    "form": "baro",
+    "en": "pressure",
+    "zh": "压力",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/baro-"
+  },
+  {
+    "kind": "prefix",
+    "form": "biblio",
+    "en": "book",
+    "zh": "书",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/biblio-"
+  },
+  {
+    "kind": "prefix",
+    "form": "cosmo",
+    "en": "the universe or the world",
+    "zh": "宇宙、世界",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/cosmo-"
+  },
+  {
+    "kind": "prefix",
+    "form": "electro",
+    "en": "electricity",
+    "zh": "电",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/electro-"
+  },
+  {
+    "kind": "prefix",
+    "form": "audio",
+    "en": "sound",
+    "zh": "声音",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/audio-"
+  },
+  {
+    "kind": "prefix",
+    "form": "angio",
+    "en": "a vessel, especially a blood or lymph vessel",
+    "zh": "血管",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/angio-"
+  },
+  {
+    "kind": "prefix",
+    "form": "archaeo",
+    "en": "ancient, early, primitive",
+    "zh": "古代、原始",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/archaeo-"
+  },
+  {
+    "kind": "prefix",
+    "form": "agro",
+    "en": "agriculture",
+    "zh": "农业",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/agro-"
+  },
+  {
+    "kind": "prefix",
+    "form": "chemo",
+    "en": "chemicals or chemistry",
+    "zh": "化学",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/chemo-"
+  },
+  {
+    "kind": "suffix",
+    "form": "ation",
+    "en": "an action or process",
+    "zh": "行为、过程",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/-ation"
+  },
+  {
+    "kind": "suffix",
+    "form": "ible",
+    "en": "able to be",
+    "zh": "可……的",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/-ible"
+  },
+  {
+    "kind": "suffix",
+    "form": "osis",
+    "en": "a disease or condition",
+    "zh": "病变、状态",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/-osis"
+  },
+  {
+    "kind": "suffix",
+    "form": "oma",
+    "en": "disease or morbidity",
+    "zh": "疾病、病变",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/-oma"
+  },
+  {
+    "kind": "suffix",
+    "form": "ent",
+    "en": "causing, doing, or promoting an action",
+    "zh": "做……的",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/-ent"
+  },
+  {
+    "kind": "suffix",
+    "form": "graph",
+    "en": "that writes",
+    "zh": "书写、记录",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/-graph"
+  },
+  {
+    "kind": "suffix",
+    "form": "ure",
+    "en": "a process, condition, or result",
+    "zh": "过程、状态、结果",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/-ure"
+  },
+  {
+    "kind": "suffix",
+    "form": "sis",
+    "en": "an action or process",
+    "zh": "行为、过程",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/-sis"
+  },
+  {
+    "kind": "suffix",
+    "form": "esis",
+    "en": "a condition, action, or process",
+    "zh": "状况、行为、过程",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/-esis"
+  },
+  {
+    "kind": "suffix",
+    "form": "ory",
+    "en": "of or pertaining to; serving for",
+    "zh": "……的、用于",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/-ory"
+  },
+  {
+    "kind": "suffix",
+    "form": "cy",
+    "en": "a state, condition, or quality",
+    "zh": "状态、性质",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/-cy"
+  },
+  {
+    "kind": "suffix",
+    "form": "genesis",
+    "en": "origin",
+    "zh": "起源",
+    "source": "Wiktionary",
+    "license": "CC BY-SA",
+    "url": "https://en.wiktionary.org/wiki/-genesis"
+  }
+]
