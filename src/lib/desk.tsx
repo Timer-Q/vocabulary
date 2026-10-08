@@ -9,7 +9,9 @@ import {
   type ReactNode,
   type RefObject,
 } from 'react'
+import { useLocation } from 'react-router-dom'
 import { searchWords, useIndex } from './data'
+import { isWordSheet } from './nav'
 import type { IndexData } from '../types'
 
 export type DeskRow = {
@@ -65,6 +67,9 @@ export function samePath(path: string, to: string): boolean {
 }
 
 export function DeskProvider({ children }: { children: ReactNode }) {
+  const location = useLocation()
+  const sheetRef = useRef(false)
+  sheetRef.current = isWordSheet(location.pathname)
   const { data, error } = useIndex()
   const [query, setQueryState] = useState('')
   const [hi, setHiState] = useState(0)
@@ -138,6 +143,9 @@ export function DeskProvider({ children }: { children: ReactNode }) {
       if (event.key === '/' && !isField(event.target)) {
         event.preventDefault()
         inputRef.current?.focus()
+        return
+      }
+      if (sheetRef.current && (event.key === 'Escape' || event.key === 'ArrowDown' || event.key === 'ArrowUp' || event.key === 'Enter')) {
         return
       }
       if (event.key === 'Escape') {

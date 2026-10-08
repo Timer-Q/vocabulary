@@ -84,8 +84,8 @@ export function starFromMorpheme(chunk: MorphemeChunk): GraphSpec {
     list: listFrom(chunk.words),
     note:
       chunk.words.length > shown.length
-        ? `图上先展开 ${shown.length} 个，剩下的在列表里。点词进入详情。`
-        : '每个词都从这一词素长出来。点词进入详情。',
+        ? `树上先放 ${shown.length} 个，剩下的在列表里。点词看解析。`
+        : '每个词都从这一词素长出来。点词看解析。',
   }
 }
 
@@ -112,7 +112,7 @@ export function starFromSection(section: SectionChunk): GraphSpec {
     groups: [],
     listTitle: `同组 ${section.words.length} 个词`,
     list: listFrom(section.words),
-    note: `讲义里的关系是星形：中心词 ${section.hub} 连着同组每一个词，词和词之间没有第二条边。图上展开 ${shown.length} 个，避免上百个节点叠在一起。`,
+    note: `讲义里的关系是星形：中心词 ${section.hub} 连着同组每一个词，词和词之间没有第二条边。树上先放 ${shown.length} 个，其余在列表里。`,
   }
 }
 
@@ -184,6 +184,6 @@ export function groupsFromWord(word: Word, family: Word[], section: SectionChunk
     note:
       groups.length === 0
         ? '这个词在词库里没有词素拆分，也没有讲义同组。'
-        : '内圈是构词成分，外圈是同族或同章邻居。点节点打开对应的词或词素。',
+        : '枝干是构词成分，叶子是同族或同章邻居。点词看解析，点词素进入词库。',
   }
 }

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useLocation, useSearchParams } from 'react-router-dom'
+import { isWordSheet } from '../lib/nav'
 import { ComposingStick } from '../components/ComposingStick'
 import { loadMorpheme, loadOrphans, loadSection, studyWords, useIndex } from '../lib/data'
 import { useDesk } from '../lib/desk'
@@ -31,6 +32,7 @@ function isField(target: EventTarget | null): boolean {
 }
 
 export function StudyPage() {
+  const location = useLocation()
   const [params] = useSearchParams()
   const morphemeId = params.get('m')
   const sectionId = params.get('s')
@@ -166,6 +168,7 @@ export function StudyPage() {
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
+      if (isWordSheet(location.pathname)) return
       if (!word || done || desk.query.trim()) return
       if (event.isComposing || isField(event.target)) return
       if (event.key === ' ' || event.key === 'Enter') {

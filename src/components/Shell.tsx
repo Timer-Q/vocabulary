@@ -1,5 +1,6 @@
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { DeskProvider, RowList, useDesk, useDeskKeys, type DeskRow } from '../lib/desk'
+import { isWordGraph, surfaceLocation, wordLocation } from '../lib/nav'
 import type { MorphemeSummary, SectionSummary } from '../types'
 
 const nav = [
@@ -7,7 +8,7 @@ const nav = [
   {
     to: '/roots',
     label: '词库',
-    match: (path: string) => path.startsWith('/roots') || path.startsWith('/sections') || path.startsWith('/words'),
+    match: (path: string) => path.startsWith('/roots') || path.startsWith('/sections') || isWordGraph(path),
   },
   { to: '/study', label: '学习', match: (path: string) => path.startsWith('/study') },
   { to: '/me', label: '进度', match: (path: string) => path.startsWith('/me') },
@@ -51,7 +52,14 @@ function SearchPopover() {
   const rows = [...desk.wordHits, ...morphs, ...sections]
   useDeskKeys({
     rows,
-    onCommit: (row) => navigate(row.to),
+    onCommit: (row, how) => {
+      if (row.tone === 'word') {
+        if (how !== 'enter') return
+        navigate(wordLocation(row.label, location))
+        return
+      }
+      navigate(row.to)
+    },
   })
   return (
     <div className="popover" role="presentation">
@@ -65,7 +73,8 @@ function SearchPopover() {
         label="搜索结果"
         onPick={(row, index) => {
           desk.setHi(index)
-          navigate(row.to)
+          if (row.tone === 'word') navigate(wordLocation(row.label, location))
+          else navigate(row.to)
         }}
       />
     </div>
@@ -74,11 +83,12 @@ function SearchPopover() {
 
 function DeskFrame() {
   const location = useLocation()
+  const surface = surfaceLocation(location)
   const desk = useDesk()
   const lexicon =
-    location.pathname.startsWith('/roots') ||
-    location.pathname.startsWith('/sections') ||
-    location.pathname.startsWith('/words')
+    surface.pathname.startsWith('/roots') ||
+    surface.pathname.startsWith('/sections') ||
+    isWordGraph(surface.pathname)
   const showPopover = desk.query.trim().length > 0 && !lexicon
 
   return (
@@ -93,7 +103,7 @@ function DeskFrame() {
         </Link>
         <nav className="rail-nav" aria-label="主导航">
           {nav.map((item) => {
-            const on = item.match(location.pathname)
+            const on = item.match(surface.pathname)
             return (
               <Link key={item.to} to={item.to} className={on ? 'rail-link is-on' : 'rail-link'} aria-current={on ? 'page' : undefined}>
                 {item.label}

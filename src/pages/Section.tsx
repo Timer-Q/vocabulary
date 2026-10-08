@@ -1,22 +1,20 @@
 import { useEffect, useMemo, useState } from 'react'
-import { Link, useLocation, useParams } from 'react-router-dom'
-import { RelationGraph } from '../components/RelationGraph'
+import { Link, useParams } from 'react-router-dom'
+import { RelationTree } from '../components/RelationTree'
+import { WordList } from '../components/WordList'
 import { loadSection } from '../lib/data'
 import { starFromSection } from '../lib/graphModel'
 import type { SectionChunk } from '../types'
 
 export function SectionPage() {
   const { id = '' } = useParams()
-  const { search } = useLocation()
   const [section, setSection] = useState<SectionChunk | null>(null)
   const [error, setError] = useState('')
-  const [hot, setHot] = useState<string | null>(null)
 
   useEffect(() => {
     let live = true
     setSection(null)
     setError('')
-    setHot(null)
     loadSection(id)
       .then((data) => {
         if (live) setSection(data)
@@ -47,7 +45,7 @@ export function SectionPage() {
         <p className="quiet">讲义组 {section.id}</p>
         <h1 className="spell">{section.hub}</h1>
         <p className="meaning">{section.title}</p>
-        <p className="prose">中心词连着同组的每一个词，词和词之间没有第二条边。</p>
+        <p className="prose">中心词连着同组的每一个词。列表是主体，关系树默认收着。</p>
         <div className="actions">
           <Link className="btn primary" to={`/study?s=${encodeURIComponent(section.id)}`}>
             学这一组
@@ -55,32 +53,15 @@ export function SectionPage() {
         </div>
       </header>
       <div className="detail-body">
+        <RelationTree spec={spec} />
         <div className="family">
           {[...letters.entries()].map(([letter, words]) => (
-            <section key={letter}>
+            <section key={letter} className="family-block tone-hub">
               <h2 className="group-label">{letter}</h2>
-              <ul className="family-list">
-                {words.map((word) => (
-                  <li key={word.spelling}>
-                    <Link
-                      to={{ pathname: `/words/${encodeURIComponent(word.spelling)}`, search }}
-                      className={hot === `w:${word.spelling}` ? 'family-link is-hot' : 'family-link'}
-                      onMouseEnter={() => setHot(`w:${word.spelling}`)}
-                      onMouseLeave={() => setHot(null)}
-                    >
-                      <strong>
-                        {word.spelling}
-                        {word.hub ? <em>中心</em> : null}
-                      </strong>
-                      <span>{word.gloss}</span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
+              <WordList words={words} />
             </section>
           ))}
         </div>
-        <RelationGraph spec={spec} hotId={hot} onHot={setHot} />
       </div>
     </div>
   )

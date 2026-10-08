@@ -51,6 +51,40 @@ export async function lookupWord(spelling: string): Promise<CatalogRow | null> {
   return rows.find((row) => row[0] === normalized) ?? null
 }
 
+export async function loadWordBundle(spelling: string): Promise<{
+  word: Word
+  family: Word[]
+  section: SectionChunk | null
+} | null> {
+  const row = await lookupWord(spelling)
+  if (!row) return null
+  let family: Word[] = []
+  let section: SectionChunk | null = null
+  let word: Word | undefined
+  if (row[2].startsWith('m/')) {
+    const chunk = await loadMorpheme(row[2].slice(2))
+    family = chunk.words
+    word = chunk.words.find((item) => item.spelling === row[0])
+    if (word?.section) section = await loadSection(word.section)
+  } else if (row[2].startsWith('s/')) {
+    section = await loadSection(row[2].slice(2))
+    word = section.words.find((item) => item.spelling === row[0])
+    const root = word?.parts.find((part) => part.type === 'root')
+    if (root) {
+      try {
+        family = (await loadMorpheme(root.id)).words
+      } catch {
+        family = []
+      }
+    }
+  } else {
+    const pack = await loadOrphans()
+    word = pack.words.find((item) => item.spelling === row[0])
+  }
+  if (!word) return null
+  return { word, family, section }
+}
+
 export async function searchWords(query: string): Promise<CatalogRow[]> {
   const q = query.trim().toLowerCase()
   if (!q) return []

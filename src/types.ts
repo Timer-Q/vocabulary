@@ -19,7 +19,10 @@ export type Word = {
   gloss: string
   bridge: string | null
   levels: string[]
+  poses: string[]
   frequency: number
+  /** Ordinal in the 5500 lecture list. Null when the word is not in that list. */
+  lectureRank: number | null
   parts: Part[]
   morphemes: string[]
   examples: Example[]
@@ -97,4 +100,13 @@ export function levelLabel(level: string): string {
 
 export function isMorphemeKind(value: string): value is MorphemeKind {
   return value === 'root' || value === 'prefix' || value === 'suffix' || value === 'combining_form'
+}
+
+/** Hide type-labels that were stored in place of a gloss. Real glosses pass through. */
+export function glossText(meaning: string | null | undefined): string {
+  const text = (meaning || '').trim()
+  if (!text || text === '见词族' || text === '前缀' || text === '后缀' || text === '词根' || text === '词干') return ''
+  if (/^(名词|动词|形容词|副词)?(前缀|后缀)$/.test(text)) return ''
+  if (/^(前缀|后缀|词根|词干)/.test(text) && text.length <= 8) return ''
+  return text
 }

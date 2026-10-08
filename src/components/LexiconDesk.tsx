@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
+import { isWordGraph, isWordSheet, surfaceLocation, wordLocation } from '../lib/nav'
 import { RowList, samePath, useDesk, useDeskKeys, type DeskRow } from '../lib/desk'
 import { dueCount, useProgress } from '../lib/progress'
 import type { MorphemeKind, MorphemeSummary, SectionSummary } from '../types'
@@ -53,7 +54,8 @@ function rootRow(item: MorphemeSummary, done: boolean): DeskRow {
 
 function paneFor(path: string): 'today' | 'lex' | null {
   if (path === '/') return 'today'
-  if (path.startsWith('/roots') || path.startsWith('/sections') || path.startsWith('/words')) return 'lex'
+  if (isWordSheet(path)) return null
+  if (path.startsWith('/roots') || path.startsWith('/sections') || isWordGraph(path)) return 'lex'
   return null
 }
 
@@ -67,13 +69,14 @@ export function AwaitingSelection() {
 
 export function LexiconDesk() {
   const location = useLocation()
-  const explicit = paneFor(location.pathname)
+  const surface = surfaceLocation(location)
+  const explicit = paneFor(surface.pathname)
   const [pane, setPane] = useState<'today' | 'lex'>(explicit ?? 'today')
   useEffect(() => {
     if (explicit) setPane(explicit)
   }, [explicit])
 
-  const keysOn = location.pathname !== '/study' && !location.pathname.startsWith('/me')
+  const keysOn = !isWordSheet(location.pathname) && surface.pathname !== '/study' && !surface.pathname.startsWith('/me')
   const [todayId, setTodayId] = useState<string | null>(null)
 
   return (
@@ -150,6 +153,7 @@ function TodayList({ shown, keys, onId }: { shown: boolean; keys: boolean; onId:
   const progress = useProgress()
   const navigate = useNavigate()
   const location = useLocation()
+  const surface = surfaceLocation(location)
   const [hi, setHi] = useState(0)
   const rows = useMemo(() => {
     const roots = desk.index?.morphemes.filter((item) => item.kind === 'root') ?? []
@@ -183,7 +187,7 @@ function TodayList({ shown, keys, onId }: { shown: boolean; keys: boolean; onId:
         idPrefix="home"
         rows={rows}
         hi={desk.query.trim() ? -1 : hi}
-        pathname={location.pathname}
+        pathname={surface.pathname}
         label="今天的词根"
         follow={shown}
         onPick={(row, index) => {
@@ -196,12 +200,13 @@ function TodayList({ shown, keys, onId }: { shown: boolean; keys: boolean; onId:
 
 function LexHead() {
   const location = useLocation()
+  const surface = surfaceLocation(location)
   const navigate = useNavigate()
-  const tab = location.pathname.startsWith('/sections') ? 'section' : deskTab(location.search)
+  const tab = surface.pathname.startsWith('/sections') ? 'section' : deskTab(surface.search)
   const kind = kindFrom(location.search)
 
   function setTab(next: 'morpheme' | 'section') {
-    const params = new URLSearchParams(location.search)
+    const params = new URLSearchParams(surface.search)
     if (next === 'section') params.set('tab', 'section')
     else params.delete('tab')
     const search = params.toString()
@@ -209,12 +214,12 @@ function LexHead() {
   }
 
   function setKind(next: (typeof filters)[number]['id']) {
-    const params = new URLSearchParams(location.search)
+    const params = new URLSearchParams(surface.search)
     params.delete('tab')
     if (next === 'all') params.delete('kind')
     else params.set('kind', next)
     const search = params.toString()
-    const pathname = location.pathname.startsWith('/roots') ? location.pathname : '/roots'
+    const pathname = surface.pathname.startsWith('/roots') ? surface.pathname : '/roots'
     navigate({ pathname, search: search ? `?${search}` : '' }, { replace: true })
   }
 
@@ -255,12 +260,23 @@ function LexHead() {
   )
 }
 
+function openRow(row: { tone: string; label: string; to: string }, how: 'arrow' | 'enter' | 'click', location: ReturnType<typeof useLocation>, navigate: ReturnType<typeof useNavigate>) {
+  if (row.tone === 'word') {
+    if (how === 'arrow') return
+    navigate(wordLocation(row.label, location))
+    return
+  }
+  const surface = surfaceLocation(location)
+  navigate({ pathname: row.to, search: surface.search }, how === 'arrow' ? { replace: true } : undefined)
+}
+
 function LexList({ shown, keys }: { shown: boolean; keys: boolean }) {
   const desk = useDesk()
   const navigate = useNavigate()
   const location = useLocation()
-  const tab = location.pathname.startsWith('/sections') ? 'section' : deskTab(location.search)
-  const kind = kindFrom(location.search)
+  const surface = surfaceLocation(location)
+  const tab = surface.pathname.startsWith('/sections') ? 'section' : deskTab(surface.search)
+  const kind = kindFrom(surface.search)
 
   const rows = useMemo(() => {
     const data = desk.index
@@ -291,10 +307,10 @@ function LexList({ shown, keys }: { shown: boolean; keys: boolean }) {
   useDeskKeys({
     rows,
     enabled: keys,
-    onCommit: (row, how) => navigate({ pathname: row.to, search: location.search }, how === 'arrow' ? { replace: true } : undefined),
+    onCommit: (row, how) => openRow(row, how, location, navigate),
     onEscape: () => {
-      if (location.pathname !== '/roots') {
-        navigate({ pathname: '/roots', search: location.search })
+      if (surface.pathname !== '/roots') {
+        navigate({ pathname: '/roots', search: surface.search })
         return true
       }
       return false
@@ -303,7 +319,7 @@ function LexList({ shown, keys }: { shown: boolean; keys: boolean }) {
 
   useEffect(() => {
     if (!shown || desk.query.trim()) return
-    const idx = rows.findIndex((row) => samePath(location.pathname, row.to))
+    const idx = rows.findIndex((row) => samePath(surface.pathname, row.to))
     if (idx >= 0 && idx !== desk.hi) desk.setHi(idx)
   }, [location.pathname, rowSig, desk.query, desk.hi, desk.setHi, rows, shown])
 
@@ -317,12 +333,12 @@ function LexList({ shown, keys }: { shown: boolean; keys: boolean }) {
         idPrefix="lex"
         rows={rows}
         hi={desk.hi}
-        pathname={location.pathname}
+        pathname={surface.pathname}
         label={tab === 'section' ? '讲义组' : '词素'}
         follow={shown}
         onPick={(row, index) => {
           desk.setHi(index)
-          navigate({ pathname: row.to, search: location.search })
+          openRow(row, 'click', location, navigate)
         }}
       />
     </>

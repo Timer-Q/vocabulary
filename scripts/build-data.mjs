@@ -30,17 +30,27 @@ function cleanText(value) {
     .trim()
 }
 
+function isGenericMeaning(meaning) {
+  const text = cleanText(meaning)
+  if (!text || text === '见词族') return true
+  if (GENERIC.has(text)) return true
+  if (/^(前缀|后缀|词根|词干)/.test(text)) return true
+  if (/^(名词|动词|形容词|副词)?(前缀|后缀)$/.test(text)) return true
+  return false
+}
+
 function glossOf(word) {
-  const raw = word.pos?.[0]?.meaning || ''
-  let text = cleanText(raw).split('\n')[0] || ''
-  text = text.replace(/^\[[^\]]+\]\s*/, '')
-  text = text.replace(/^[a-z./]+\.?\s*/i, '')
-  text = text.split(/[;；]/)[0] || text
-  text = text.replace(/[（(]解读[\s\S]*$/, '').trim()
-  text = text.replace(/[，,]\s*$/, '')
-  if (!text) return '暂无简明释义'
-  if (text.length > 42) return `${text.slice(0, 42)}…`
-  return text
+  const parts = Array.isArray(word.pos) ? word.pos : []
+  const senses = []
+  for (const part of parts) {
+    let text = cleanText(part?.meaning || '')
+    text = text.replace(/^\[[^\]]+\]\s*/, '')
+    text = text.replace(/^[a-z][a-z./]*\.?\s+/i, '')
+    text = text.replace(/[（(]解读[\s\S]*$/, '').trim()
+    text = text.replace(/[，,]\s*$/, '')
+    if (text) senses.push(text)
+  }
+  return senses.join('；') || '暂无简明释义'
 }
 
 function meaningFromStory(story) {
@@ -127,10 +137,10 @@ async function main() {
   const derivedBySpelling = new Map(derivedWords.map((word) => [word.spelling, word]))
   const lectureBySpelling = new Map(lectureWords.map((word) => [word.spelling, word]))
 
-  for (const word of derivedWords) {
+  for (const word of [...derivedWords, ...lectureWords]) {
     for (const part of word.splitPattern || []) {
       const meaning = cleanText(part.meaning)
-      if (!meaning || GENERIC.has(meaning)) continue
+      if (isGenericMeaning(meaning)) continue
       const id = morphemeId(part.type, part.rootForm || part.form)
       const bag = meaningVotes.get(id) || new Map()
       bag.set(meaning, (bag.get(meaning) || 0) + 1)
@@ -144,7 +154,7 @@ async function main() {
     let bestCount = 0
     if (bag) {
       for (const [meaning, count] of bag) {
-        if (GENERIC.has(meaning) || /^前缀|后缀/.test(meaning)) continue
+        if (isGenericMeaning(meaning)) continue
         if (count > bestCount || (count === bestCount && meaning.length > best.length)) {
           best = meaning
           bestCount = count
@@ -152,7 +162,8 @@ async function main() {
       }
     }
     if (best) return best
-    return meaningFromStory(storyById.get(id)) || '见词族'
+    const fromStory = meaningFromStory(storyById.get(id))
+    return fromStory && !isGenericMeaning(fromStory) ? fromStory : ''
   }
 
   const sectionBySpelling = new Map()
@@ -200,11 +211,13 @@ async function main() {
       if (seen.has(id)) continue
       seen.add(id)
       const form = displayForm.get(id) || part.form
+      const voted = meaningOf(id)
+      const own = cleanText(part.meaning)
       parts.push({
         form,
         type,
         id,
-        meaning: meaningOf(id) !== '见词族' ? meaningOf(id) : cleanText(part.meaning) || '见词族',
+        meaning: voted || (isGenericMeaning(own) ? '' : own),
       })
     }
     if (parts.length === 0) {
@@ -266,7 +279,15 @@ async function main() {
       gloss: glossOf(base),
       bridge: bridgeOf(lecture) || bridgeOf(derived),
       levels: Array.isArray(base.level) ? base.level : [],
+      poses: [
+        ...new Set(
+          (Array.isArray(base.pos) ? base.pos : [])
+            .map((item) => cleanText(item?.pos))
+            .filter((item) => item && item.length <= 12),
+        ),
+      ].slice(0, 6),
       frequency: Number(base.frequency) || 0,
+      lectureRank: lecture && Number(lecture.frequency) > 0 ? Number(lecture.frequency) : null,
       parts,
       morphemes,
       examples: examplesBySpelling.get(spelling) || [],
@@ -407,7 +428,50 @@ async function main() {
   await writeJson(path.join(outDir, 'index.json'), index)
 
   const sizes = await dirSizes(outDir)
-  console.log(JSON.stringify({ index: index.stats, files: sizes.files, bytes: sizes.bytes }, null, 2))
+  const affix = { prefix: { filled: 0, blank: 0 }, suffix: { filled: 0, blank: 0 } }
+  const affixIds = { prefix: new Map(), suffix: new Map() }
+  const seenAffix = new Set()
+  function noteAffix(word) {
+    for (const part of word.parts || []) {
+      if (part.type !== 'prefix' && part.type !== 'suffix') continue
+      const key = `${word.spelling}|${part.id}`
+      if (seenAffix.has(key)) continue
+      seenAffix.add(key)
+      const bucket = affix[part.type]
+      const ids = affixIds[part.type]
+      const prev = ids.get(part.id) || { filled: 0, blank: 0, form: part.form }
+      if (part.meaning) {
+        bucket.filled += 1
+        prev.filled += 1
+      } else {
+        bucket.blank += 1
+        prev.blank += 1
+      }
+      ids.set(part.id, prev)
+    }
+  }
+  for (const meta of morphemeMeta) {
+    for (const spelling of morphemeWords.get(meta.id) || []) {
+      const word = buildWord(spelling)
+      if (word) noteAffix(word)
+    }
+  }
+  for (const section of sections) {
+    for (const spelling of section.members) {
+      if (derivedBySpelling.has(spelling)) continue
+      const word = buildWord(spelling)
+      if (word) noteAffix(word)
+    }
+  }
+  for (const word of orphans) noteAffix(word)
+  function blankIds(kind) {
+    return [...affixIds[kind].entries()]
+      .filter(([, info]) => info.filled === 0)
+      .sort((a, b) => b[1].blank - a[1].blank)
+      .slice(0, 12)
+      .map(([id, info]) => `${id}×${info.blank}`)
+  }
+  console.log(JSON.stringify({ index: index.stats, files: sizes.files, bytes: sizes.bytes, affix, blankPrefix: blankIds('prefix'), blankSuffix: blankIds('suffix') }, null, 2))
   if (index.stats.words < 8000 || index.stats.morphemes < 200) {
     throw new Error('seed build produced too little data')
   }
