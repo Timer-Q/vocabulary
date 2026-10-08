@@ -39,6 +39,17 @@ function cleanText(value) {
     .trim()
 }
 
+function isMetaMeaning(meaning) {
+  const text = cleanText(meaning)
+  if (!text) return false
+  if (/的复数|的变体|的旧式|的罕见形式|的现在分词|的第三人称|的动名词/.test(text)) return true
+  if (/前的\s*[A-Za-z]/.test(text)) return true
+  if (/英式\s*-/.test(text)) return true
+  if (/对应\s*-/.test(text)) return true
+  if (/plural of|alternative form of|alternative spelling of|alternative letter-case|\bform of\b|obsolete form of|rare form of|variant of/i.test(text)) return true
+  return false
+}
+
 function isGenericMeaning(meaning) {
   const text = cleanText(meaning)
   if (!text || text === '见词族') return true
@@ -46,6 +57,7 @@ function isGenericMeaning(meaning) {
   if (/^(前缀|后缀|词根|词干)/.test(text)) return true
   if (/^(名词|动词|形容词|副词)?(前缀|后缀)$/.test(text)) return true
   if (text.includes('-=')) return true
+  if (isMetaMeaning(text)) return true
   return false
 }
 
