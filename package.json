@@ -1,19 +1,24 @@
 {
-  "name": "vocabulary",
+  "name": "vocabulary-web",
   "private": true,
-  "version": "0.1.0",
-  "description": "词根记忆背单词小程序：Taro 双端前端 + NestJS 后端",
-  "packageManager": "pnpm@10.32.1",
+  "type": "module",
   "scripts": {
-    "dev:app:weapp": "pnpm --filter @vocabulary/app dev:weapp",
-    "dev:app:tt": "pnpm --filter @vocabulary/app dev:tt",
-    "dev:server": "pnpm --filter @vocabulary/server start:dev",
-    "build": "pnpm --filter @vocabulary/app build && pnpm --filter @vocabulary/server build",
-    "typecheck": "pnpm --filter @vocabulary/app typecheck && pnpm --filter @vocabulary/server typecheck",
-    "check:weapp": "node scripts/check-weapp-config.mjs",
-    "lint": "pnpm --filter @vocabulary/app lint && pnpm --filter @vocabulary/server lint"
+    "predev": "node scripts/build-data.mjs",
+    "prebuild": "node scripts/build-data.mjs",
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build && node scripts/spa-fallback.mjs",
+    "preview": "vite preview"
   },
-  "engines": {
-    "node": ">=20"
+  "dependencies": {
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.6.2"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.2",
+    "@types/react-dom": "^19.1.2",
+    "@vitejs/plugin-react": "^4.4.1",
+    "typescript": "^5.8.3",
+    "vite": "^6.3.5"
   }
 }

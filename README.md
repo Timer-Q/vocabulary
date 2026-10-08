@@ -1,37 +1,28 @@
-# Vocabulary
+# 词根词汇
 
-词根记忆背单词小程序工程。前端使用 Taro 单一代码库同时发布微信小程序和抖音小程序，后端使用 NestJS；Supabase 负责 Auth、PostgreSQL、Storage，Redis 保留用于复习队列和缓存。
+把原来的词根小程序做成纯前端网页。词库来自讲义和派生词素，不连后端。学习进度记在浏览器本地。
 
-## 目录
+首页看今天该学什么，词库按词根、前缀、后缀找，点进去能看到一组词是怎么拼出来的。关系图一次只展开一个词素或一个讲义中心词，点节点打开单词。学习时先看拆分，翻开后再选不认识、模糊、认识或掌握。
 
-```text
-vocabulary/
-├── app/        # Taro 4 + React + TypeScript 小程序
-├── server/     # NestJS + Supabase Auth/PostgreSQL/Storage + Redis 后端
-├── docs/       # 产品、接口、数据、设计、MVP 文档
-└── PRD.md      # 产品需求文档
-```
+## 本地运行
 
-## 常用命令
+需要 Node.js 20 以上和 pnpm 9。
 
 ```bash
 pnpm install
-pnpm dev:server
-pnpm dev:app:weapp
-pnpm dev:app:tt
-pnpm typecheck
+pnpm dev
 ```
 
-## 环境准备
+开发地址是 [http://localhost:5173/vocabulary/](http://localhost:5173/vocabulary/)。路径带 `/vocabulary/`，和 GitHub Pages 项目站一致。
 
-1. 复制 `server/.env.example` 为 `server/.env` 或 `server/.env.local`。
-2. **Supabase API Keys**（控制台：**Settings → API Keys**，例如 `https://supabase.com/dashboard/project/_/settings/api-keys`；说明见 [Understanding API keys](https://supabase.com/docs/guides/api/api-keys)）  
-   - **`SUPABASE_URL`**：项目 URL（可与 Dashboard **Connect** 对话框或同一设置页中的 Project URL 一致）。  
-   - **`SUPABASE_ANON_KEY`**：填 **Publishable key**（推荐，`sb_publishable_...`）；也可使用 **Legacy** 标签页里的 **`anon` JWT**（旧版「可公开」密钥）。二者在本项目中对应「低权限、面向客户端场景」的用法（服务端里配合 Auth 登录）。  
-   - **`SUPABASE_SERVICE_ROLE_KEY`**：填 **Secret key**（推荐，`sb_secret_...`）；也可使用 **Legacy** 标签页里的 **`service_role` JWT**。二者对应服务端特权（绕过 RLS），**仅后端环境变量**，切勿写入小程序或前端仓库。  
-   Supabase 推荐新项目优先使用 Publishable / Secret，Legacy `anon` / `service_role` 将在 JWT 轮换等场景下更易踩坑。
-3. 配置 `DATABASE_URL`（连接池）与 `DIRECT_URL`（直连迁移）。
-4. 在 Supabase Storage 创建 `media` bucket，或通过 `SUPABASE_MEDIA_BUCKET` 指定自定义 bucket。
-5. 配置 Redis，用于复习队列与缓存。
-6. 执行 `pnpm --filter @vocabulary/server prisma:generate`。
-7. 执行 `pnpm --filter @vocabulary/server prisma:migrate` 初始化数据库。
+`pnpm build` 会先根据 `seed/` 里的词库生成 `public/data/`，再打包到 `dist/`。不要把 `server/.cache` 或 ECDICT 放进这个仓库。
+
+## 发布
+
+推送到 `main` 后，GitHub Actions 会构建并部署到 GitHub Pages。仓库地址按 [https://timer-q.github.io/vocabulary/](https://timer-q.github.io/vocabulary/) 来配。
+
+需要在仓库的 Settings → Pages 里，把 Source 选成 **GitHub Actions**，只做这一次。之后每次推 `main` 都会更新页面。
+
+## 数据
+
+首屏只拉一份很小的索引。词素、讲义组和字母表目录都是点开再加载。派生词库里的例句是模板句，页面不用它们；例句只用讲义里能读的句子。讲义词与词的关系是「中心词连同组词」的星形，图上会限量展开，完整名单在旁边的列表里。

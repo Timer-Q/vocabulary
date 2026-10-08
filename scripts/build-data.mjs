@@ -1,0 +1,438 @@
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
+const seedDir = path.join(root, 'seed')
+const outDir = path.join(root, 'public', 'data')
+
+const GENERIC = new Set(['前缀', '后缀', '词根', '名词', '动词', '形容词', '副词'])
+
+function load(name) {
+  return readFile(path.join(seedDir, name), 'utf8').then((text) => JSON.parse(text))
+}
+
+function normForm(form) {
+  return String(form || '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '')
+}
+
+function morphemeId(kind, form) {
+  return `${kind}/${normForm(form)}`
+}
+
+function cleanText(value) {
+  return String(value || '')
+    .replace(/\\n/g, '\n')
+    .replace(/[\u0000-\u0008]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+
+function glossOf(word) {
+  const raw = word.pos?.[0]?.meaning || ''
+  let text = cleanText(raw).split('\n')[0] || ''
+  text = text.replace(/^\[[^\]]+\]\s*/, '')
+  text = text.replace(/^[a-z./]+\.?\s*/i, '')
+  text = text.split(/[;；]/)[0] || text
+  text = text.replace(/[（(]解读[\s\S]*$/, '').trim()
+  text = text.replace(/[，,]\s*$/, '')
+  if (!text) return '暂无简明释义'
+  if (text.length > 42) return `${text.slice(0, 42)}…`
+  return text
+}
+
+function meaningFromStory(story) {
+  if (!story) return ''
+  const matched =
+    story.match(/本义「([^」]{1,32})」/) ||
+    story.match(/多表示「([^」]{1,32})」/) ||
+    story.match(/常表达「([^」]{1,32})」/) ||
+    story.match(/「([^」]{1,24})」/)
+  return matched ? matched[1] : ''
+}
+
+function phoneticOf(word) {
+  const raw = cleanText(word.phoneticUk || word.phoneticUs || '')
+  if (!raw) return ''
+  return raw.replace(/^\/+|\/+$/g, '')
+}
+
+function exampleScore(example) {
+  const en = cleanText(example.sentence)
+  const zh = cleanText(example.translation)
+  if (!en || !zh) return -1
+  if (/carries the idea|shifts the word|承载「/.test(`${en}${zh}`)) return -1
+  let score = 0
+  if (en.includes(' ') && en.length >= 16 && en.length <= 180) score += 5
+  if (/[a-z]/i.test(en) && /[\u4e00-\u9fff]/.test(zh)) score += 2
+  if (en.length < 8) score -= 2
+  return score
+}
+
+async function main() {
+  const [
+    derivedWords,
+    links,
+    stories,
+    lectureWords,
+    lectureExamples,
+    lectureNotes,
+    sections,
+  ] = await Promise.all([
+    load('derived-words.json'),
+    load('derived-morpheme-links.json'),
+    load('derived-morpheme-stories.json'),
+    load('lecture-words.json'),
+    load('lecture-examples.json'),
+    load('lecture-word-notes.json'),
+    load('lecture-sections.json'),
+  ])
+
+  const storyById = new Map()
+  for (const story of stories) {
+    storyById.set(morphemeId(story.kind, story.normalizedForm), story.story)
+  }
+
+  const linksBySpelling = new Map()
+  const displayForm = new Map()
+  const meaningVotes = new Map()
+  for (const link of links) {
+    const id = morphemeId(link.morphemeKind, link.morphemeForm)
+    const list = linksBySpelling.get(link.spelling) || []
+    list.push(link)
+    linksBySpelling.set(link.spelling, list)
+    const prev = displayForm.get(id)
+    if (!prev || link.morphemeForm.length > prev.length) displayForm.set(id, link.morphemeForm)
+  }
+
+  const derivedBySpelling = new Map(derivedWords.map((word) => [word.spelling, word]))
+  const lectureBySpelling = new Map(lectureWords.map((word) => [word.spelling, word]))
+
+  for (const word of derivedWords) {
+    for (const part of word.splitPattern || []) {
+      const meaning = cleanText(part.meaning)
+      if (!meaning || GENERIC.has(meaning)) continue
+      const id = morphemeId(part.type, part.rootForm || part.form)
+      const bag = meaningVotes.get(id) || new Map()
+      bag.set(meaning, (bag.get(meaning) || 0) + 1)
+      meaningVotes.set(id, bag)
+    }
+  }
+
+  function meaningOf(id) {
+    const bag = meaningVotes.get(id)
+    let best = ''
+    let bestCount = 0
+    if (bag) {
+      for (const [meaning, count] of bag) {
+        if (GENERIC.has(meaning) || /^前缀|后缀/.test(meaning)) continue
+        if (count > bestCount || (count === bestCount && meaning.length > best.length)) {
+          best = meaning
+          bestCount = count
+        }
+      }
+    }
+    if (best) return best
+    return meaningFromStory(storyById.get(id)) || '见词族'
+  }
+
+  const sectionBySpelling = new Map()
+  const hubOf = new Map()
+  for (const section of sections) {
+    hubOf.set(section.sectionId, section.hub)
+    for (const spelling of section.members) sectionBySpelling.set(spelling, section.sectionId)
+  }
+
+  const notesBySpelling = new Map()
+  for (const note of lectureNotes) {
+    const text = cleanText(note.etymology)
+    if (text) notesBySpelling.set(note.spelling, text.slice(0, 220))
+  }
+
+  const examplesBySpelling = new Map()
+  for (const example of lectureExamples) {
+    if (exampleScore(example) < 2) continue
+    const list = examplesBySpelling.get(example.spelling) || []
+    list.push({
+      en: cleanText(example.sentence).slice(0, 220),
+      zh: cleanText(example.translation).slice(0, 220),
+      score: exampleScore(example),
+    })
+    examplesBySpelling.set(example.spelling, list)
+  }
+  for (const [spelling, list] of examplesBySpelling) {
+    list.sort((a, b) => b.score - a.score || a.en.length - b.en.length)
+    examplesBySpelling.set(
+      spelling,
+      list.slice(0, 2).map(({ en, zh }) => ({ en, zh })),
+    )
+  }
+
+  function partsOf(spelling) {
+    const derived = derivedBySpelling.get(spelling)
+    const lecture = lectureBySpelling.get(spelling)
+    const source = derived?.splitPattern?.length ? derived : lecture
+    const parts = []
+    const seen = new Set()
+    for (const part of source?.splitPattern || []) {
+      const type = part.type
+      if (!type) continue
+      const id = morphemeId(type, part.rootForm || part.form)
+      if (seen.has(id)) continue
+      seen.add(id)
+      const form = displayForm.get(id) || part.form
+      parts.push({
+        form,
+        type,
+        id,
+        meaning: meaningOf(id) !== '见词族' ? meaningOf(id) : cleanText(part.meaning) || '见词族',
+      })
+    }
+    if (parts.length === 0) {
+      for (const link of linksBySpelling.get(spelling) || []) {
+        const id = morphemeId(link.morphemeKind, link.morphemeForm)
+        if (seen.has(id)) continue
+        seen.add(id)
+        parts.push({
+          form: link.displayForm || link.morphemeForm,
+          type: link.morphemeKind,
+          id,
+          meaning: meaningOf(id),
+        })
+      }
+    }
+    return parts
+  }
+
+  function morphemeIdsOf(spelling) {
+    const ids = []
+    const seen = new Set()
+    for (const link of linksBySpelling.get(spelling) || []) {
+      const id = morphemeId(link.morphemeKind, link.morphemeForm)
+      if (seen.has(id)) continue
+      seen.add(id)
+      ids.push(id)
+    }
+    return ids
+  }
+
+  function primaryId(spelling) {
+    const list = linksBySpelling.get(spelling) || []
+    const picked =
+      list.find((link) => link.morphemeKind === 'root' || link.position === 'root') ||
+      list.find((link) => link.morphemeKind === 'combining_form') ||
+      list[0]
+    return picked ? morphemeId(picked.morphemeKind, picked.morphemeForm) : null
+  }
+
+  function buildWord(spelling) {
+    const derived = derivedBySpelling.get(spelling)
+    const lecture = lectureBySpelling.get(spelling)
+    const base = lecture || derived
+    if (!base) return null
+    const section = sectionBySpelling.get(spelling) || null
+    const parts = partsOf(spelling)
+    const morphemes = []
+    const seen = new Set()
+    for (const id of [...parts.map((part) => part.id), ...morphemeIdsOf(spelling)]) {
+      if (!id || seen.has(id)) continue
+      seen.add(id)
+      morphemes.push(id)
+    }
+    return {
+      spelling,
+      phonetic: phoneticOf(base),
+      gloss: glossOf(base),
+      levels: Array.isArray(base.level) ? base.level : [],
+      frequency: Number(base.frequency) || 0,
+      parts,
+      morphemes,
+      examples: examplesBySpelling.get(spelling) || [],
+      note: notesBySpelling.get(spelling) || null,
+      section,
+      hub: section ? hubOf.get(section) === spelling : false,
+    }
+  }
+
+  const morphemeWords = new Map()
+  for (const word of derivedWords) {
+    const id = primaryId(word.spelling)
+    if (!id) continue
+    const list = morphemeWords.get(id) || []
+    list.push(word.spelling)
+    morphemeWords.set(id, list)
+  }
+
+  const kindOrder = { root: 0, prefix: 1, suffix: 2, combining_form: 3 }
+  const morphemeMeta = []
+  for (const [id, spellings] of morphemeWords) {
+    const [kind, slug] = id.split('/')
+    const form = displayForm.get(id) || slug
+    morphemeMeta.push({
+      id,
+      form,
+      kind,
+      meaning: meaningOf(id),
+      count: spellings.length,
+    })
+  }
+  morphemeMeta.sort((a, b) => {
+    const byKind = (kindOrder[a.kind] ?? 9) - (kindOrder[b.kind] ?? 9)
+    if (byKind !== 0) return byKind
+    if (b.count !== a.count) return b.count - a.count
+    return a.form.localeCompare(b.form)
+  })
+
+  await rm(outDir, { recursive: true, force: true })
+  await mkdir(outDir, { recursive: true })
+
+  const catalog = []
+  let exampleCount = 0
+
+  for (const meta of morphemeMeta) {
+    const spellings = morphemeWords.get(meta.id) || []
+    const words = spellings
+      .map((spelling) => buildWord(spelling))
+      .filter(Boolean)
+      .sort(compareWords)
+    for (const word of words) exampleCount += word.examples.length
+    const chunk = {
+      id: meta.id,
+      form: meta.form,
+      kind: meta.kind,
+      meaning: meta.meaning,
+      story: storyById.get(meta.id) || '',
+      words,
+    }
+    const rel = `m/${meta.id}.json`
+    await writeJson(path.join(outDir, rel), chunk)
+    for (const word of words) {
+      catalog.push([word.spelling, word.gloss, `m/${meta.id}`, word.section || ''])
+    }
+  }
+
+  const sectionMeta = []
+  for (const section of sections) {
+    const words = section.members
+      .map((spelling) => buildWord(spelling))
+      .filter(Boolean)
+    const hubWord = words.find((word) => word.spelling === section.hub)
+    const title = `${section.sectionId} · ${section.hub}`
+    sectionMeta.push({
+      id: section.sectionId,
+      hub: section.hub,
+      hubGloss: hubWord?.gloss || '',
+      count: words.length,
+      title,
+    })
+    await writeJson(path.join(outDir, `s/${section.sectionId}.json`), {
+      id: section.sectionId,
+      hub: section.hub,
+      title,
+      words,
+    })
+    for (const spelling of section.members) {
+      if (derivedBySpelling.has(spelling)) continue
+      const word = words.find((item) => item.spelling === spelling)
+      if (!word) continue
+      exampleCount += word.examples.length
+      catalog.push([word.spelling, word.gloss, `s/${section.sectionId}`, section.sectionId])
+    }
+  }
+
+  const placed = new Set(catalog.map((row) => row[0]))
+  const orphans = lectureWords
+    .map((word) => word.spelling)
+    .filter((spelling) => !placed.has(spelling))
+    .map((spelling) => buildWord(spelling))
+    .filter(Boolean)
+    .sort(compareWords)
+  if (orphans.length) {
+    await writeJson(path.join(outDir, 'w/orphans.json'), { words: orphans })
+    for (const word of orphans) {
+      exampleCount += word.examples.length
+      catalog.push([word.spelling, word.gloss, 'w/orphans', ''])
+    }
+  }
+
+  catalog.sort((a, b) => a[0].localeCompare(b[0]))
+  const byLetter = new Map()
+  for (const row of catalog) {
+    const letter = /^[a-z]/.test(row[0]) ? row[0][0] : '_'
+    const list = byLetter.get(letter) || []
+    list.push(row)
+    byLetter.set(letter, list)
+  }
+  for (const [letter, rows] of byLetter) {
+    await writeJson(path.join(outDir, `catalog/${letter}.json`), rows)
+  }
+
+  const lectureOnly = catalog.filter((item) => item[2].startsWith('s/')).length
+  const index = {
+    stats: {
+      morphemes: morphemeMeta.length,
+      words: catalog.length,
+      derivedWords: derivedWords.length,
+      lectureWords: lectureWords.length,
+      lectureOnly,
+      lectureSections: sectionMeta.length,
+      examples: exampleCount,
+    },
+    morphemes: morphemeMeta,
+    sections: sectionMeta,
+  }
+
+  await writeJson(path.join(outDir, 'index.json'), index)
+
+  const sizes = await dirSizes(outDir)
+  console.log(JSON.stringify({ index: index.stats, files: sizes.files, bytes: sizes.bytes }, null, 2))
+  if (index.stats.words < 8000 || index.stats.morphemes < 200) {
+    throw new Error('seed build produced too little data')
+  }
+}
+
+function compareWords(a, b) {
+  const aHyphen = a.spelling.includes('-') ? 1 : 0
+  const bHyphen = b.spelling.includes('-') ? 1 : 0
+  if (aHyphen !== bHyphen) return aHyphen - bHyphen
+  if (b.frequency !== a.frequency) return b.frequency - a.frequency
+  return a.spelling.localeCompare(b.spelling)
+}
+
+async function writeJson(file, data) {
+  await mkdir(path.dirname(file), { recursive: true })
+  await writeFile(file, JSON.stringify(data))
+}
+
+async function dirSizes(dir) {
+  const { readdir, stat } = await import('node:fs/promises')
+  let files = 0
+  let bytes = 0
+  const buckets = {}
+  async function walk(current, bucket) {
+    const entries = await readdir(current, { withFileTypes: true })
+    for (const entry of entries) {
+      const next = path.join(current, entry.name)
+      if (entry.isDirectory()) {
+        await walk(next, bucket || entry.name)
+      } else {
+        const info = await stat(next)
+        files += 1
+        bytes += info.size
+        const key = bucket || 'root'
+        buckets[key] = buckets[key] || { files: 0, bytes: 0 }
+        buckets[key].files += 1
+        buckets[key].bytes += info.size
+      }
+    }
+  }
+  await walk(dir, '')
+  return { files, bytes, buckets }
+}
+
+main().catch((error) => {
+  console.error(error)
+  process.exit(1)
+})

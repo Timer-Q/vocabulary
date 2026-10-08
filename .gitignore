@@ -1,22 +1,5 @@
-node_modules/
-dist/
-build/
-.turbo/
+node_modules
+dist
+public/data
 .DS_Store
-
-.env
-.env.local
-.env.*.local
-
-coverage/
-*.log
-
-app/.swc/
-app/dist/
-
-# 微信开发者工具本地覆盖（可能写入 touristappid，覆盖 project.config.json）
-project.private.config.json
-app/project.private.config.json
-server/dist/
-server/generated/
-server/.cache/
+*.local
